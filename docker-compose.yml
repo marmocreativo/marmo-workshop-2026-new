@@ -1,0 +1,27 @@
+# Para Dokploy (tipo "Compose") o para probar local: docker compose up --build
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    # Sin "ports": Dokploy (Traefik) enruta el dominio al puerto 3000 del contenedor.
+    # Para probar en local, descomenta:
+    # ports: ["3000:3000"]
+    expose:
+      - "3000"
+    environment:
+      APP_URL: ${APP_URL}
+      AUTH_SECRET: ${AUTH_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-marmocreativo@gmail.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      BILLING_BYPASS: ${BILLING_BYPASS:-false}
+      FAL_KEY: ${FAL_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+    volumes:
+      - marmo-data:/app/data
+      - marmo-storage:/app/storage
+
+volumes:
+  marmo-data:
+  marmo-storage:
