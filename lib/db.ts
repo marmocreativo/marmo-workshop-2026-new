@@ -19,6 +19,10 @@ CREATE TABLE IF NOT EXISTS generations(
 CREATE TABLE IF NOT EXISTS generation_modifiers(
   generation_id TEXT NOT NULL, modifier_id TEXT NOT NULL, text TEXT NOT NULL,
   PRIMARY KEY(generation_id, modifier_id));
+CREATE TABLE IF NOT EXISTS presets(
+  id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL, free_text TEXT, ref_file TEXT,
+  modifier_ids TEXT NOT NULL, created_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_presets_user ON presets(user_id, created_at);
 CREATE TABLE IF NOT EXISTS plans(
   id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, price_cents INTEGER NOT NULL, tokens INTEGER NOT NULL,
   features TEXT NOT NULL DEFAULT '[]', highlighted INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1,
@@ -62,8 +66,9 @@ const MIGRATIONS = [
   "ALTER TABLE users ADD COLUMN stripe_subscription_id TEXT",
   "ALTER TABLE users ADD COLUMN cancel_at_period_end INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE generations ADD COLUMN tokens_spent INTEGER",
+  "ALTER TABLE presets ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0",
 ];
-const DB_VERSION = 6; // súbelo al agregar migraciones para que el servidor en caliente las aplique
+const DB_VERSION = 8; // súbelo al agregar migraciones para que el servidor en caliente las aplique
 
 const g = globalThis as unknown as { __db?: Client; __dbReady?: Promise<unknown>; __dbVer?: number };
 

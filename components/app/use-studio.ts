@@ -6,7 +6,7 @@ import { api, fileUrl, jsonBody, resizeImage } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { MODELS, getModel, resolveRatio } from "@/lib/models";
 import { tokensFor } from "@/lib/tokens";
-import type { Generation } from "@/lib/types";
+import type { Generation, Preset } from "@/lib/types";
 import type { BillingMe } from "./billing-panel";
 import { useLibrary } from "./use-library";
 
@@ -125,6 +125,7 @@ export function useStudio(initialRef?: string) {
 
   async function process() {
     if (!image) return toast.error("Primero agrega una foto");
+    if (selected.size === 0) return toast.error("Elige al menos un modificador");
     setBusy(true);
     try {
       const form = new FormData();
@@ -190,6 +191,56 @@ export function useStudio(initialRef?: string) {
     }
   }
 
+  // Presets: solo modificadores + texto extra (la imagen es una portada y no se carga como foto).
+  function applyPreset(p: Preset) {
+    const alive = new Set(library.modifiers.map((m) => m.id));
+    const ids = p.modifier_ids.filter((id) => alive.has(id));
+    setSelected(new Set(ids));
+    setFreeText(p.free_text ?? "");
+    if (ids.length < p.modifier_ids.length) toast.message("Algunos modificadores del preset ya no existen");
+    toast.success(`Preset "${p.name}" aplicado`);
+  }
+
+  async function savePreset(name: string, withImage: boolean) {
+    const form = new FormData();
+    form.set("name", name);
+    form.set("freeText", freeText);
+    form.set("modifierIds", jsonBody([...selected]));
+    if (withImage && image) form.set("image", await resizeImage(image, 640));
+    await api("/api/presets", { method: "POST", body: form });
+    await library.refresh();
+    toast.success("Preset guardado");
+  }
+
+  async function savePresetFromGeneration(generationId: string, name: string) {
+    const form = new FormData();
+    form.set("name", name);
+    form.set("generationId", generationId);
+    await api("/api/presets", { method: "POST", body: form });
+    await library.refresh();
+    toast.success("Preset guardado");
+  }
+
+  async function setPresetPublic(id: string, isPublic: boolean) {
+    try {
+      await api(`/api/presets/${id}`, { method: "PATCH", body: jsonBody({ isPublic }) });
+      await library.refresh();
+      toast.success(isPublic ? "Preset público: otros usuarios podrán guardarlo" : "Preset privado");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
+  async function deletePreset(id: string) {
+    try {
+      await api(`/api/presets/${id}`, { method: "DELETE" });
+      await library.refresh();
+      toast.success("Preset eliminado");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
   async function reuse(g: Generation, parts: ReusePart[]) {
     if (parts.includes("reference") && g.source_file) await useStoredFile(g.source_file);
     if (parts.includes("result") && g.result_file && g.kind === "image") await useStoredFile(g.result_file);
@@ -238,6 +289,12 @@ export function useStudio(initialRef?: string) {
     setSourceDeleted,
     setVisibility,
     reuse,
+    applyPreset,
+    savePreset,
+    savePresetFromGeneration,
+    deletePreset,
+    setPresetPublic,
+    canProcess: !!image && selected.size > 0 && canAfford,
     pasteFromClipboard,
     useStoredFile,
   };

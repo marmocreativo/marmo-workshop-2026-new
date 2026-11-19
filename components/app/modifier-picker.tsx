@@ -16,12 +16,56 @@ type BrowserProps = {
   selected: Set<string>;
   onToggle: (id: string) => void;
   className?: string;
+  /** Escritorio: una sola categoría a la vez (sin "Todos"); abre en "Más usados" o en la primera categoría. */
+  focused?: boolean;
 };
 
+type Hover = { src: string; label: string; rect: DOMRect };
+
+// Miniatura con vista ampliada al pasar el mouse.
+function Thumb({ src, label, origin, onHover }: { src: string; label: string; origin?: boolean; onHover: (h: Hover | null) => void }) {
+  return (
+    <span
+      className={cn("relative block size-14 shrink-0 overflow-hidden rounded-xl", origin ? "ring-2 ring-primary/60" : "border")}
+      onMouseEnter={(e) => onHover({ src, label, rect: e.currentTarget.getBoundingClientRect() })}
+      onMouseLeave={() => onHover(null)}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={fileUrl(src)} alt={label} loading="lazy" className="size-full object-cover" />
+      {origin && (
+        <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 bg-black/70 py-0.5 text-[9px] font-medium text-white">
+          <ScanSearch className="size-2.5" /> Origen
+        </span>
+      )}
+    </span>
+  );
+}
+
+function HoverPreview({ h }: { h: Hover }) {
+  const w = 340;
+  const left = Math.min(h.rect.right + 12, window.innerWidth - w - 12);
+  const top = Math.max(12, Math.min(h.rect.top + h.rect.height / 2 - 220, window.innerHeight - 452));
+  return (
+    <div
+      className="pointer-events-none fixed z-[100] overflow-hidden rounded-2xl border bg-black shadow-2xl"
+      style={{ left, top, width: w }}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={fileUrl(h.src)} alt="" className="max-h-[440px] w-full object-contain" />
+      <p className="bg-black/80 px-3 py-1 text-xs text-white">{h.label}</p>
+    </div>
+  );
+}
+
 // Buscador + categorías + lista seleccionable. Se usa en el panel móvil y en la columna de escritorio.
-export function ModifierBrowser({ categories, modifiers, selected, onToggle, className }: BrowserProps) {
-  const [tab, setTab] = useState<string>("all");
+export function ModifierBrowser({ categories, modifiers, selected, onToggle, className, focused }: BrowserProps) {
+  const [picked, setPicked] = useState<string | null>(focused ? null : "all");
   const [search, setSearch] = useState("");
+  const [hover, setHover] = useState<Hover | null>(null);
+  const hasTop = modifiers.some((m) => m.usage_count > 0);
+  // Enfocado: sin elección explícita se abre en "Más usados" o, si no hay, en la primera categoría.
+  const tab = picked ?? (focused ? (hasTop ? "top" : (categories[0]?.id ?? "top")) : "all");
+  const setTab = setPicked;
 
   const list = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -60,7 +104,7 @@ export function ModifierBrowser({ categories, modifiers, selected, onToggle, cla
         onChange={setTab}
         categories={categories}
         extra={[
-          { value: "all", label: "Todos" },
+          ...(focused ? [] : [{ value: "all", label: "Todos" }]),
           { value: "new", label: "Más nuevos" },
           { value: "favs", label: "★ Favoritos" },
           { value: "top", label: "Más usados" },
@@ -96,19 +140,10 @@ export function ModifierBrowser({ categories, modifiers, selected, onToggle, cla
                     {m.usage_count} {m.usage_count === 1 ? "uso" : "usos"}
                   </span>
                   {(m.origin_file || (m.thumbs?.length ?? 0) > 0) && (
-                    <span className="mt-2 flex items-center gap-1.5">
-                      {m.origin_file && (
-                        <span className="relative block size-14 shrink-0 overflow-hidden rounded-xl ring-2 ring-primary/60">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={fileUrl(m.origin_file)} alt="Imagen de origen" loading="lazy" className="size-full object-cover" />
-                          <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 bg-black/70 py-0.5 text-[9px] font-medium text-white">
-                            <ScanSearch className="size-2.5" /> Origen
-                          </span>
-                        </span>
-                      )}
-                      {m.thumbs?.map((f) => (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img key={f} src={fileUrl(f)} alt="Resultado de referencia" loading="lazy" className="size-14 shrink-0 rounded-xl border object-cover" />
+                    <span className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {m.origin_file && <Thumb src={m.origin_file} label="Imagen de origen" origin onHover={setHover} />}
+                      {m.thumbs?.slice(0, 4).map((f) => (
+                        <Thumb key={f} src={f} label="Resultado de referencia" onHover={setHover} />
                       ))}
                     </span>
                   )}
@@ -119,6 +154,7 @@ export function ModifierBrowser({ categories, modifiers, selected, onToggle, cla
           );
         })}
       </ul>
+      {hover && <HoverPreview h={hover} />}
     </div>
   );
 }

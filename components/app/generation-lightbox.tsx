@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect } from "react";
-import { ChevronLeft, ChevronRight, Copy, Download, Globe, Lock, Recycle, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bookmark, ChevronLeft, ChevronRight, Copy, Download, Globe, Lock, Recycle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { fileUrl } from "@/lib/client";
 import { MODELS } from "@/lib/models";
@@ -18,6 +19,8 @@ type Props = {
   onDelete: (id: string) => Promise<void> | void;
   onReuse?: (g: Generation, parts: ReusePart[]) => void;
   onModifierClick?: (modifierId: string) => void;
+  /** Guarda los modificadores y el texto extra del resultado como preset (su imagen es la portada). */
+  onSavePreset?: (g: Generation, name: string) => Promise<void>;
   /** Cambia la visibilidad pública del resultado o de su referencia. */
   onVisibility?: (g: Generation, patch: { isPublic?: boolean; sourcePublic?: boolean }) => void;
   /** Vista de comunidad (resultado ajeno): sin borrar, reutilizar ni privacidad. */
@@ -34,6 +37,49 @@ const REUSE: { parts: ReusePart[]; label: string }[] = [
   { parts: ["model"], label: "Modelo" },
 ];
 
+// Botón que se despliega en un campo de nombre para guardar el resultado como preset.
+function SavePresetRow({ g, onSave }: { g: Generation; onSave: (g: Generation, name: string) => Promise<void> }) {
+  const [name, setName] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  async function submit() {
+    if (!name?.trim()) return;
+    setBusy(true);
+    try {
+      await onSave(g, name.trim());
+      setName(null);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (name === null) {
+    return (
+      <Button variant="outline" className="h-10 w-full rounded-xl" onClick={() => setName("")}>
+        <Bookmark /> Guardar como preset
+      </Button>
+    );
+  }
+  return (
+    <div className="flex gap-2">
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        maxLength={60}
+        placeholder="Nombre del preset"
+        autoFocus
+        className="h-10 flex-1 text-base"
+        onKeyDown={(e) => e.key === "Enter" && !busy && submit()}
+      />
+      <Button className="h-10" disabled={busy || !name.trim()} onClick={submit}>
+        Guardar
+      </Button>
+    </div>
+  );
+}
+
 export function GenerationLightbox({
   items,
   openId,
@@ -41,6 +87,7 @@ export function GenerationLightbox({
   onDelete,
   onReuse,
   onModifierClick,
+  onSavePreset,
   onVisibility,
   readOnly,
   footer,
@@ -192,6 +239,10 @@ export function GenerationLightbox({
                     </label>
                   )}
                 </section>
+              )}
+
+              {onSavePreset && !readOnly && g.result_file && g.kind === "image" && (g.modifiers.length > 0 || g.free_text) && (
+                <SavePresetRow key={g.id} g={g} onSave={onSavePreset} />
               )}
 
               {onReuse && !readOnly && (

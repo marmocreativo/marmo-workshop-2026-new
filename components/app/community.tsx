@@ -2,18 +2,22 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { BookmarkPlus, Play, Sparkles } from "lucide-react";
+import { Bookmark, BookmarkPlus, Play, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, fileUrl } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import type { CommunityModifier, Generation } from "@/lib/types";
+import type { CommunityModifier, CommunityPreset, Generation } from "@/lib/types";
 import { GenerationLightbox } from "./generation-lightbox";
 
 // Lo que otros usuarios marcaron como público: resultados (con su prompt) y modificadores.
 export function Community() {
-  const [tab, setTab] = useState<"results" | "mods">("results");
+  const [tab, setTab] = useState<"results" | "mods" | "presets">("results");
+  const [presets, setPresets] = useState<CommunityPreset[] | null>(null);
+  const [preset, setPreset] = useState<CommunityPreset | null>(null);
+  const [savedPresets, setSavedPresets] = useState<Set<string>>(new Set());
   const [gens, setGens] = useState<Generation[] | null>(null);
   const [mods, setMods] = useState<CommunityModifier[] | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -27,7 +31,20 @@ export function Community() {
     api<{ modifiers: CommunityModifier[] }>("/api/community/modifiers")
       .then((r) => setMods(r.modifiers))
       .catch((e: Error) => (toast.error(e.message), setMods([])));
+    api<{ presets: CommunityPreset[] }>("/api/community/presets")
+      .then((r) => setPresets(r.presets))
+      .catch((e: Error) => (toast.error(e.message), setPresets([])));
   }, []);
+
+  async function savePreset(p: CommunityPreset) {
+    try {
+      await api(`/api/community/presets/${p.id}/clone`, { method: "POST" });
+      setSavedPresets((s) => new Set(s).add(p.id));
+      toast.success("Preset guardado en tu biblioteca");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
 
   const categories = useMemo(() => [...new Set((mods ?? []).map((m) => m.category))].sort(), [mods]);
   const shownMods = (mods ?? []).filter((m) => cat === "all" || m.category === cat);
@@ -46,14 +63,15 @@ export function Community() {
     <div className="mx-auto flex w-full flex-1 flex-col gap-4 lg:max-w-6xl">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Comunidad</h1>
-        <p className="text-sm text-muted-foreground">Resultados y modificadores que otros usuarios decidieron compartir.</p>
+        <p className="text-sm text-muted-foreground">Resultados, modificadores y presets que otros usuarios decidieron compartir.</p>
       </header>
 
-      <div className="grid max-w-sm grid-cols-2 gap-1 rounded-xl bg-muted p-1 text-sm font-medium">
+      <div className="grid max-w-md grid-cols-3 gap-1 rounded-xl bg-muted p-1 text-sm font-medium">
         {(
           [
             ["results", "Resultados"],
             ["mods", "Modificadores"],
+            ["presets", "Presets"],
           ] as const
         ).map(([k, label]) => (
           <button
@@ -67,7 +85,38 @@ export function Community() {
         ))}
       </div>
 
-      {tab === "results" ? (
+      {tab === "presets" ? (
+        <div className="grid grid-cols-2 gap-2 pb-4 sm:grid-cols-3 lg:grid-cols-5">
+          {presets === null && [0, 1, 2, 3].map((i) => <Skeleton key={i} className="aspect-square rounded-2xl" />)}
+          {presets?.length === 0 && (
+            <p className="col-span-full py-16 text-center text-sm text-muted-foreground">
+              Todavía no hay presets públicos. Comparte los tuyos desde la pestaña Presets de tu Biblioteca.
+            </p>
+          )}
+          {presets?.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setPreset(p)}
+              className="relative flex aspect-square items-end overflow-hidden rounded-2xl border bg-muted text-left"
+            >
+              {p.ref_file ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={fileUrl(p.ref_file)} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
+              ) : (
+                <Bookmark className="absolute top-1/2 left-1/2 size-10 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/40" />
+              )}
+              <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+              <span className="relative w-full p-3 text-white">
+                <span className="block truncate text-sm font-semibold">{p.name}</span>
+                <span className="block truncate text-xs text-white/70">
+                  {p.modifiers.length} modificador{p.modifiers.length === 1 ? "" : "es"}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : tab === "results" ? (
         <div className="grid grid-cols-2 gap-2 pb-4 sm:grid-cols-3 lg:grid-cols-5">
           {gens === null && [0, 1, 2, 3].map((i) => <Skeleton key={i} className="aspect-[4/5] rounded-2xl" />)}
           {gens?.length === 0 && (
@@ -134,6 +183,35 @@ export function Community() {
           </ul>
         </div>
       )}
+
+      <Dialog open={!!preset} onOpenChange={(o) => !o && setPreset(null)}>
+        <DialogContent className="max-h-[88dvh] overflow-y-auto">
+          {preset && (
+            <>
+              <DialogHeader>
+                <DialogTitle>{preset.name}</DialogTitle>
+                <DialogDescription>Se copiará a tu biblioteca junto con sus modificadores.</DialogDescription>
+              </DialogHeader>
+              {preset.ref_file && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={fileUrl(preset.ref_file)} alt="" className="mx-auto aspect-square w-full max-w-xs rounded-2xl object-cover" />
+              )}
+              <ul className="space-y-1.5">
+                {preset.modifiers.map((m, i) => (
+                  <li key={i} className="rounded-xl bg-muted px-3 py-2 text-sm">
+                    <span className="block text-[10px] font-semibold tracking-wide text-muted-foreground uppercase">{m.category}</span>
+                    {m.text}
+                  </li>
+                ))}
+                {preset.free_text && <li className="rounded-xl border px-3 py-2 text-sm italic">{preset.free_text}</li>}
+              </ul>
+              <Button className="h-11" disabled={savedPresets.has(preset.id)} onClick={() => savePreset(preset)}>
+                <BookmarkPlus /> {savedPresets.has(preset.id) ? "Guardado" : "Guardar en mis presets"}
+              </Button>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <GenerationLightbox
         items={gens ?? []}

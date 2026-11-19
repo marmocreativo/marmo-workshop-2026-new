@@ -40,3 +40,23 @@ export type Generation = {
   created_at: number;
   modifiers: GenerationModifier[];
 };
+
+/** Combinación guardada de modificadores y texto extra; la imagen es solo una portada. */
+export type Preset = {
+  id: string;
+  name: string;
+  free_text: string | null;
+  ref_file: string | null;
+  modifier_ids: string[];
+  /** 1 = visible para la comunidad (otros pueden guardarlo en su biblioteca). */
+  is_public: number;
+  created_at: number;
+};
+
+export type CommunityPreset = {
+  id: string;
+  name: string;
+  free_text: string | null;
+  ref_file: string | null;
+  modifiers: { text: string; category: string }[];
+};

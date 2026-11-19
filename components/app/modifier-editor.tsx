@@ -42,6 +42,16 @@ export function ModifierEditor({
   const fileRef = useRef<HTMLInputElement>(null);
   const originRef = useRef<File | null>(null);
   const [analysisTokens, setAnalysisTokens] = useState<number | null>(null);
+  const [originUrl, setOriginUrl] = useState<string | null>(null);
+
+  // Vista previa de la imagen que se está analizando.
+  function showOrigin(file: File | null) {
+    setOriginUrl((old) => {
+      if (old) URL.revokeObjectURL(old);
+      return file ? URL.createObjectURL(file) : null;
+    });
+  }
+  useEffect(() => () => showOrigin(null), []);
 
   // Muestra el costo del análisis la primera vez que se abre esa pestaña.
   useEffect(() => {
@@ -54,6 +64,8 @@ export function ModifierEditor({
   useEffect(() => {
     if (!open) return;
     originRef.current = null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    showOrigin(null);
     setMode("write");
     setSuggestions([]);
     setText(editing?.text ?? "");
@@ -112,6 +124,7 @@ export function ModifierEditor({
       const form = new FormData();
       const small = await resizeImage(file, 1280);
       originRef.current = small; // se sube al guardar, como "origen" de los modificadores
+      showOrigin(small);
       form.set("image", small);
       const { suggestions: s } = await api<{ suggestions: { categoryId: string; text: string }[] }>("/api/analyze", {
         method: "POST",
@@ -212,6 +225,13 @@ export function ModifierEditor({
                 e.target.value = "";
               }}
             />
+            {originUrl && (
+              <div className="relative overflow-hidden rounded-2xl border bg-black">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={originUrl} alt="Imagen analizada" className="mx-auto max-h-64 w-auto object-contain" />
+                {busy && <div className="absolute inset-0 animate-pulse bg-primary/20" />}
+              </div>
+            )}
             {busy ? (
               <Button variant="outline" className="h-11 w-full" disabled>
                 <Loader2 className="animate-spin" /> Analizando con Gemini…

@@ -102,6 +102,13 @@ export function Gallery({ initialModifierId }: { initialModifierId?: string }) {
         openId={openId}
         onOpenChange={setOpenId}
         onDelete={remove}
+        onSavePreset={async (x, name) => {
+          const form = new FormData();
+          form.set("name", name);
+          form.set("generationId", x.id);
+          await api("/api/presets", { method: "POST", body: form });
+          toast.success("Preset guardado");
+        }}
         onVisibility={async (g, patch) => {
           setGens((all) =>
             all.map((x) =>

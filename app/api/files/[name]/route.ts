@@ -15,8 +15,9 @@ export const GET = handle(async (_req: Request, { params }: { params: Promise<{ 
   if (!name.startsWith(`${user.id}_`)) {
     const shared = await one(
       `SELECT 1 FROM generations
-       WHERE (result_file=? AND is_public=1) OR (source_file=? AND source_public=1 AND source_deleted_at IS NULL)`,
-      [name, name],
+       WHERE (result_file=? AND is_public=1) OR (source_file=? AND source_public=1 AND source_deleted_at IS NULL)
+         OR EXISTS (SELECT 1 FROM presets WHERE ref_file=? AND is_public=1)`,
+      [name, name, name],
     );
     if (!shared) throw new HttpError(404, "No encontrado");
   }

@@ -3,20 +3,23 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/client";
-import type { Category, Modifier } from "@/lib/types";
+import type { Category, Modifier, Preset } from "@/lib/types";
 
 export function useLibrary() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [modifiers, setModifiers] = useState<Modifier[]>([]);
+  const [presets, setPresets] = useState<Preset[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    const [c, m] = await Promise.all([
+    const [c, m, p] = await Promise.all([
       api<{ categories: Category[] }>("/api/categories"),
       api<{ modifiers: Modifier[] }>("/api/modifiers"),
+      api<{ presets: Preset[] }>("/api/presets"),
     ]);
     setCategories(c.categories);
     setModifiers(m.modifiers);
+    setPresets(p.presets);
   }, []);
 
   useEffect(() => {
@@ -25,5 +28,5 @@ export function useLibrary() {
       .finally(() => setLoading(false));
   }, [refresh]);
 
-  return { categories, modifiers, loading, refresh, setModifiers };
+  return { categories, modifiers, presets, loading, refresh, setModifiers };
 }
