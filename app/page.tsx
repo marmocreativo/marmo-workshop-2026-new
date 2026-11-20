@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check, Images, Layers, ScanSearch, Sparkles } from "lucide-react";
+import { HeroSlider } from "@/components/hero-slider";
 import { Logo } from "@/components/logo";
+import { query } from "@/lib/db";
 import { buttonVariants } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { getPricing, listPacks, listPlans } from "@/lib/billing";
@@ -45,6 +47,11 @@ const glass = "border border-white/10 bg-white/[0.06] backdrop-blur-md";
 export default async function Home() {
   const user = await getUser();
   const [plans, packs, pricing] = await Promise.all([listPlans(), listPacks(), getPricing()]);
+  // Imágenes del hero: portadas de los presets que los usuarios hicieron públicos (si no hay, la imagen fija).
+  const heroRows = await query<{ id: string }>(
+    "SELECT id FROM presets WHERE is_public=1 AND ref_file IS NOT NULL ORDER BY created_at DESC LIMIT 8",
+  ).catch(() => []);
+  const heroImages = heroRows.map((r) => `/api/public/preset/${r.id}/cover`);
   const nanoTokens = tokensFor(MODELS[0], "auto", pricing) ?? 1;
   const cta =user ? { href: "/studio", label: "Abrir Studio" } : { href: "/registro", label: "Empezar ahora" };
 
@@ -60,14 +67,18 @@ export default async function Home() {
       {/* HERO */}
       <section id="inicio" className="relative isolate flex min-h-svh flex-col overflow-hidden">
         <div className="absolute inset-y-0 right-0 -z-10 w-full lg:right-[min(22rem,24vw)] lg:w-[64%]">
-          <Image
-            src="/hero.jpg"
-            alt=""
-            fill
-            priority
-            sizes="(min-width: 1024px) 64vw, 100vw"
-            className="object-cover object-[85%_center]"
-          />
+          {heroImages.length > 0 ? (
+            <HeroSlider images={heroImages} />
+          ) : (
+            <Image
+              src="/hero.jpg"
+              alt=""
+              fill
+              priority
+              sizes="(min-width: 1024px) 64vw, 100vw"
+              className="object-cover object-[85%_center]"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-r from-background via-background/20 to-transparent max-lg:hidden" />
           <div className="absolute inset-0 bg-gradient-to-b from-background/70 via-transparent to-background lg:from-background/40" />
           <div className="absolute inset-0 bg-gradient-to-t from-background via-background/60 to-transparent lg:hidden" />

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Bookmark, Globe, Loader2, Lock, X } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, toast } from "@/lib/alerts";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -74,7 +74,7 @@ export function PresetCards({
             type="button"
             aria-label="Eliminar preset"
             title="Eliminar preset"
-            onClick={() => confirm(`¿Eliminar el preset "${p.name}"?`) && onDelete(p.id)}
+            onClick={async () => (await confirmAction("Se borrará de tu biblioteca.", { title: `¿Eliminar el preset "${p.name}"?`, confirmText: "Eliminar", danger: true })) && onDelete(p.id)}
             className={cn(
               "absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/70 text-white",
               "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-lg:opacity-100",

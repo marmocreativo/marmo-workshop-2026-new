@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
-import { Camera, ChevronDown, ClipboardPaste, FolderOpen, ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import { Camera, ChevronDown, ClipboardPaste, Eraser, FolderOpen, ImagePlus, Loader2, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getModel, MODELS } from "@/lib/models";
 import { cn } from "@/lib/utils";
@@ -168,6 +168,18 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
         )}
 
         {corner && <div className="absolute inset-x-3 top-3 z-40 flex justify-between">{corner}</div>}
+
+        {/* Quitar de golpe todos los modificadores asignados */}
+        {s.selected.size > 0 && (
+          <button
+            type="button"
+            onClick={s.clearSelected}
+            title="Quitar todos los modificadores"
+            className="absolute bottom-[15.5rem] left-3 z-30 flex h-9 items-center gap-1.5 rounded-full bg-black/55 px-3 text-xs font-medium text-white backdrop-blur hover:bg-primary"
+          >
+            <Eraser className="size-4" /> Limpiar ({s.selected.size})
+          </button>
+        )}
 
         {/* Cambiar la foto cuando ya hay una */}
         {s.preview && (

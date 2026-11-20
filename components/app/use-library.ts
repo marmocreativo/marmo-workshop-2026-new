@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/alerts";
 import { api } from "@/lib/client";
 import type { Category, Modifier, Preset } from "@/lib/types";
 

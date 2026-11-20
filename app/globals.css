@@ -157,3 +157,10 @@
 }
 
 .dark { color-scheme: dark; }
+
+/* SweetAlert2 con el tema oscuro rojo */
+.swal2-container { z-index: 2000 !important; }
+.mw-swal { border: 1px solid var(--border); border-radius: 1.25rem !important; font-family: inherit; }
+.swal2-toast.mw-swal { border-radius: 9999px !important; padding: 0.6rem 1rem !important; box-shadow: 0 10px 30px rgb(0 0 0 / 0.5); }
+.swal2-toast .swal2-title { font-size: 0.875rem !important; margin: 0 0.5rem !important; }
+.mw-swal-cancel { color: var(--foreground) !important; }

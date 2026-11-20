@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Globe, Images, Lock, Pencil, Plus, ScanSearch, Star, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, toast } from "@/lib/alerts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,7 +52,7 @@ export function Library() {
   }
 
   async function remove(m: Modifier) {
-    if (!confirm("¿Quitar este modificador de tu biblioteca? Tus resultados anteriores conservan su registro.")) return;
+    if (!(await confirmAction("Tus resultados anteriores conservan su registro.", { title: "¿Quitar este modificador de tu biblioteca?", confirmText: "Quitar", danger: true }))) return;
     try {
       await api(`/api/modifiers/${m.id}`, { method: "DELETE" });
       setModifiers((all) => all.filter((x) => x.id !== m.id));

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Coins } from "lucide-react";
 import { BottomNav, DesktopRail } from "@/components/app/bottom-nav";
+import { TokenChip } from "@/components/app/token-chip";
 import { Logo } from "@/components/logo";
 import { requireUser } from "@/lib/auth";
 
@@ -15,9 +15,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Link href="/" aria-label="Marmo Workshop" className="block w-fit">
             <Logo className="h-9" />
           </Link>
-          <Link href="/cuenta" className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1.5 text-sm font-semibold">
-            <Coins className="size-4 text-primary" /> {new Intl.NumberFormat("es-MX").format(user.tokens)}
-          </Link>
+          <TokenChip initial={user.tokens} />
         </div>
         {children}
       </main>

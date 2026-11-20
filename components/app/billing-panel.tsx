@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, Coins, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, toast } from "@/lib/alerts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -87,9 +87,10 @@ export function BillingPanel({ justPaid }: { justPaid: boolean }) {
 
   async function changePlan(plan: Plan) {
     if (
-      !confirm(
+      !(await confirmAction(
         `Cambiarás al plan ${plan.name} (${formatMxn(plan.price_cents)}/mes). Se cobra ahora la diferencia (con crédito por el tiempo no usado del plan actual), el ciclo se reinicia hoy y recibes los ${formatTokens(plan.tokens)} tokens del nuevo plan. ¿Continuar?`,
-      )
+        { title: "Cambiar de plan", confirmText: "Cambiar plan" },
+      ))
     )
       return;
     setBusy(plan.id);

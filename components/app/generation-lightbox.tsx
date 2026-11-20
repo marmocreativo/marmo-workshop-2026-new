@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Bookmark, ChevronLeft, ChevronRight, Copy, Download, Globe, Lock, Recycle, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, toast } from "@/lib/alerts";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -114,7 +114,7 @@ export function GenerationLightbox({
   const modelLabel = (id: string) => MODELS.find((m) => m.id === id)?.label ?? id;
 
   async function remove() {
-    if (!g || !confirm("¿Eliminar este resultado? Esta acción no se puede deshacer.")) return;
+    if (!g || !(await confirmAction("Esta acción no se puede deshacer.", { title: "¿Eliminar este resultado?", confirmText: "Eliminar", danger: true }))) return;
     const next = items[index + 1] ?? items[index - 1];
     await onDelete(g.id);
     onOpenChange(next?.id ?? null);

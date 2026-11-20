@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Check, ClipboardPaste, ImagePlus, Loader2, Sparkles } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/alerts";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { requestBalanceRefresh } from "@/lib/balance";
 import { api, jsonBody, resizeImage } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import type { Category, Modifier } from "@/lib/types";
@@ -136,6 +137,7 @@ export function ModifierEditor({
       toast.error((e as Error).message);
     } finally {
       setBusy(false);
+      requestBalanceRefresh(); // el análisis cuesta tokens
     }
   }
 

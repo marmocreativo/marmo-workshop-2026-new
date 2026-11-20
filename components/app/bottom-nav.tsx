@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Coins, Globe, Images, Layers, ShieldCheck, Sparkles, User } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { useLiveBalance } from "@/lib/balance";
 import { cn } from "@/lib/utils";
 
 const ITEMS = [
@@ -47,8 +48,9 @@ export function BottomNav({ isAdmin }: { isAdmin: boolean }) {
 }
 
 // Escritorio: riel lateral con iconos circulares.
-export function DesktopRail({ isAdmin, tokens }: { isAdmin: boolean; tokens: number }) {
+export function DesktopRail({ isAdmin, tokens: initialTokens }: { isAdmin: boolean; tokens: number }) {
   const pathname = usePathname();
+  const tokens = useLiveBalance(initialTokens);
   return (
     <aside className="fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-center gap-3 py-5 lg:flex">
       <Link href="/" aria-label="Marmo Workshop" className="mb-3 flex w-14 justify-center">

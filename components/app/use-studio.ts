@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { toast } from "@/lib/alerts";
 import { api, fileUrl, jsonBody, resizeImage } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { MODELS, getModel, resolveRatio } from "@/lib/models";
 import { tokensFor } from "@/lib/tokens";
 import type { Generation, Preset } from "@/lib/types";
 import type { BillingMe } from "./billing-panel";
+import { emitBalance, requestBalanceRefresh } from "@/lib/balance";
 import { useLibrary } from "./use-library";
 
 export type ReusePart = "reference" | "result" | "modifiers" | "text" | "model";
@@ -33,6 +34,15 @@ export function useStudio(initialRef?: string) {
   useEffect(() => {
     loadBilling().catch(() => {});
   }, [loadBilling]);
+  // El saldo se mantiene en vivo: cualquier cambio anunciado (cobro, devolución, Stripe) llega aquí.
+  useEffect(() => {
+    const onSet = (e: Event) => {
+      const tokens = (e as CustomEvent<number>).detail;
+      setBilling((b) => (b ? { ...b, account: { ...b.account, tokens } } : b));
+    };
+    window.addEventListener("mw:balance", onSet);
+    return () => window.removeEventListener("mw:balance", onSet);
+  }, []);
   // Costo en tokens de la generación elegida (null = modelo deshabilitado por el administrador).
   const modelDef = getModel(model);
   const tokenCost = billing && modelDef ? tokensFor(modelDef, ratio, billing.pricing) : null;
@@ -91,6 +101,8 @@ export function useStudio(initialRef?: string) {
     [library],
   );
 
+  const clearSelected = useCallback(() => setSelected(new Set()), []);
+
   const chosen = useMemo(() => library.modifiers.filter((m) => selected.has(m.id)), [library.modifiers, selected]);
 
   async function pasteFromClipboard() {
@@ -127,6 +139,8 @@ export function useStudio(initialRef?: string) {
     if (!image) return toast.error("Primero agrega una foto");
     if (selected.size === 0) return toast.error("Elige al menos un modificador");
     setBusy(true);
+    // El servidor cobra al recibir la petición: se refleja de inmediato y luego se reconcilia con el saldo real.
+    if (billing && !billing.account.bypass && tokenCost) emitBalance(Math.max(0, billing.account.tokens - tokenCost));
     try {
       const form = new FormData();
       form.set("image", await resizeImage(image));
@@ -144,7 +158,8 @@ export function useStudio(initialRef?: string) {
     } finally {
       setBusy(false);
       loadBilling().catch(() => {});
-      router.refresh(); // actualiza el saldo que muestra la barra
+      requestBalanceRefresh(); // saldo real (por si hubo devolución)
+      router.refresh();
     }
   }
 
@@ -267,6 +282,7 @@ export function useStudio(initialRef?: string) {
     setSelected,
     toggle,
     applyCreated,
+    clearSelected,
     chosen,
     freeText,
     setFreeText,

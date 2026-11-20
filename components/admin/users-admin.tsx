@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Loader2, Minus, Plus, RotateCcw, Search } from "lucide-react";
-import { toast } from "sonner";
+import { confirmAction, toast } from "@/lib/alerts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -147,9 +147,10 @@ function UserDialog({ id, onClose, onChanged }: { id: string | null; onClose: ()
     if (!Number.isFinite(cents) || cents < 1 || cents > remaining) return toast.error(`El monto debe estar entre $0.01 y ${formatMxn(remaining)}`);
     const revoke = Math.round((p.tokens * (p.refunded_cents + cents)) / p.amount_cents) - p.tokens_revoked;
     if (
-      !confirm(
+      !(await confirmAction(
         `Se reembolsarán ${formatMxn(cents)} en Stripe (dinero real, no se puede deshacer) y se revocarán hasta ${revoke} tokens del usuario. ¿Continuar?`,
-      )
+        { title: "Reembolso en Stripe", confirmText: "Reembolsar", danger: true },
+      ))
     )
       return;
     setBusy(p.id);

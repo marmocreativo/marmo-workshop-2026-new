@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, Play } from "lucide-react";
-import { toast } from "sonner";
+import { toast } from "@/lib/alerts";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, fileUrl, jsonBody } from "@/lib/client";
 import type { Generation, Modifier } from "@/lib/types";
