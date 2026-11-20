@@ -1,4 +1,5 @@
 import { ChevronDown } from "lucide-react";
+import { CategoryIcon, categorySlug } from "./category-icon";
 import { cn } from "@/lib/utils";
 import type { Category } from "@/lib/types";
 
@@ -26,7 +27,7 @@ export function CategorySelect({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         aria-label={ariaLabel}
-        className="h-10 w-full appearance-none rounded-xl border border-input bg-background pr-9 pl-3 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+        className="h-10 w-full appearance-none rounded-xl border border-input bg-background pr-9 pl-9 text-base outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
       >
         {extra.map((o) => (
           <option key={o.value} value={o.value}>
@@ -40,6 +41,7 @@ export function CategorySelect({
           </option>
         ))}
       </select>
+      <CategoryIcon slug={categorySlug(categories, value)} className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-primary" />
       <ChevronDown className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-muted-foreground" />
     </div>
   );

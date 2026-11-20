@@ -8,6 +8,7 @@ import { getModel, MODELS } from "@/lib/models";
 import { cn } from "@/lib/utils";
 import type { Modifier } from "@/lib/types";
 import { CameraDialog } from "./camera-dialog";
+import { CategoryIcon } from "./category-icon";
 import { ModifierEditor } from "./modifier-editor";
 import type { StudioState } from "./use-studio";
 
@@ -126,6 +127,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
     setPts((p) => ({ ...p, [id]: { x, y } }));
   }
 
+  const catSlug = (id: string) => s.categories.find((c) => c.id === id)?.slug;
   const catName = (id: string) => s.categories.find((c) => c.id === id)?.name ?? "";
 
   return (
@@ -158,7 +160,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
       >
         {s.preview ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={s.preview} alt="Foto a editar" className={cn("absolute inset-0 size-full", corner ? "object-cover" : "object-contain")} />
+          <img src={s.preview} alt="Foto a editar" className="absolute inset-0 size-full object-cover" />
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 pb-64 text-center text-white/70">
             <ImagePlus className="size-12" />
@@ -247,8 +249,8 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
               >
                 <div className="flex items-start gap-2">
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[10px] font-semibold tracking-wide text-primary uppercase">
-                      {catName(l.m.category_id)}
+                    <span className="flex items-center gap-1 text-[10px] font-semibold tracking-wide text-primary uppercase">
+                      <CategoryIcon slug={catSlug(l.m.category_id)} className="size-3" /> {catName(l.m.category_id)}
                     </span>
                     <span className="block text-sm leading-5">{l.m.text}</span>
                   </span>
@@ -287,10 +289,12 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
               style={{ minHeight: PILL_H }}
             >
               <span className="min-w-0 flex-1">
-                <span className="hidden text-[10px] font-semibold tracking-wide text-primary uppercase group-hover:block">
-                  {catName(l.m.category_id)}
+                <span className="hidden items-center gap-1 text-[10px] font-semibold tracking-wide text-primary uppercase group-hover:flex">
+                  <CategoryIcon slug={catSlug(l.m.category_id)} className="size-3" /> {catName(l.m.category_id)}
                 </span>
-                <span className="block truncate text-xs leading-5 group-hover:whitespace-normal">{l.m.text}</span>
+                <span className="flex items-center gap-1.5 text-xs leading-5 group-hover:block">
+                  <CategoryIcon slug={catSlug(l.m.category_id)} className="size-3.5 shrink-0 text-primary group-hover:hidden" />
+                  <span className="truncate group-hover:whitespace-normal">{l.m.text}</span></span>
               </span>
               <button
                 type="button"
