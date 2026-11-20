@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { fileUrl } from "@/lib/client";
 import { cn } from "@/lib/utils";
-import type { Preset } from "@/lib/types";
+import type { CommunityPreset, Preset } from "@/lib/types";
 
 // Cards con la imagen de referencia de fondo para reconocer los presets de un vistazo.
 export function PresetCards({
@@ -24,13 +24,13 @@ export function PresetCards({
 }) {
   if (presets.length === 0) {
     return (
-      <p className="py-10 text-center text-sm text-muted-foreground">
-        Aún no tienes presets. Elige modificadores y texto extra, y guárdalos para reutilizarlos.
+      <p className="py-4 text-center text-sm text-muted-foreground">
+        Aún no tienes presets propios. Elige modificadores y texto extra, y guárdalos para reutilizarlos.
       </p>
     );
   }
   return (
-    <ul className="grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto pb-2">
+    <ul className="grid grid-cols-2 content-start gap-2">
       {presets.map((p) => (
         <li key={p.id} className="group relative">
           <button
@@ -81,6 +81,38 @@ export function PresetCards({
             )}
           >
             <X className="size-3.5" />
+          </button>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+// Presets públicos de otros usuarios: al tocar uno se copia a tu biblioteca y se aplica.
+export function CommunityPresetCards({ presets, onUse }: { presets: CommunityPreset[]; onUse: (p: CommunityPreset) => void }) {
+  if (presets.length === 0) return null;
+  return (
+    <ul className="grid grid-cols-2 content-start gap-2">
+      {presets.map((p) => (
+        <li key={p.id} className="group">
+          <button
+            type="button"
+            onClick={() => onUse(p)}
+            className="relative flex aspect-square w-full items-end overflow-hidden rounded-2xl border bg-muted text-left"
+          >
+            {p.ref_file ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={fileUrl(p.ref_file)} alt="" loading="lazy" className="absolute inset-0 size-full object-cover transition-transform group-hover:scale-105" />
+            ) : (
+              <Bookmark className="absolute top-1/2 left-1/2 size-10 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/40" />
+            )}
+            <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+            <span className="relative w-full p-3 text-white">
+              <span className="block truncate text-sm font-semibold">{p.name}</span>
+              <span className="block truncate text-xs text-white/70">
+                {p.modifiers.length} modificador{p.modifiers.length === 1 ? "" : "es"}
+              </span>
+            </span>
           </button>
         </li>
       ))}

@@ -26,6 +26,8 @@ type Props = {
   /** Vista de comunidad (resultado ajeno): sin borrar, reutilizar ni privacidad. */
   readOnly?: boolean;
   footer?: (g: Generation) => React.ReactNode;
+  /** Aviso destacado arriba (lo usa el tutorial). */
+  banner?: string;
 };
 
 const REUSE: { parts: ReusePart[]; label: string }[] = [
@@ -91,6 +93,7 @@ export function GenerationLightbox({
   onVisibility,
   readOnly,
   footer,
+  banner,
 }: Props) {
   const index = items.findIndex((g) => g.id === openId);
   const g = index >= 0 ? items[index] : null;
@@ -123,6 +126,9 @@ export function GenerationLightbox({
   return (
     <Dialog open={!!g} onOpenChange={(o) => !o && onOpenChange(null)}>
       <DialogContent className="max-h-[92dvh] max-w-[calc(100%-1rem)] overflow-y-auto p-3 sm:max-w-5xl lg:p-4">
+        {banner && (
+          <p className="rounded-xl bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">{banner}</p>
+        )}
         {g && (
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
             <div className="relative flex items-center justify-center overflow-hidden rounded-2xl bg-black">

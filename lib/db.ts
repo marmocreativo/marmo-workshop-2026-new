@@ -69,8 +69,10 @@ const MIGRATIONS = [
   "ALTER TABLE users ADD COLUMN cancel_at_period_end INTEGER NOT NULL DEFAULT 0",
   "ALTER TABLE generations ADD COLUMN tokens_spent INTEGER",
   "ALTER TABLE presets ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0",
+  // Las cuentas que ya existían se consideran con el tutorial visto; las nuevas se registran con 0.
+  "ALTER TABLE users ADD COLUMN onboarded INTEGER NOT NULL DEFAULT 1",
 ];
-const DB_VERSION = 9; // súbelo al agregar migraciones para que el servidor en caliente las aplique
+const DB_VERSION = 10; // súbelo al agregar migraciones para que el servidor en caliente las aplique
 
 const g = globalThis as unknown as { __db?: Client; __dbReady?: Promise<unknown>; __dbVer?: number };
 

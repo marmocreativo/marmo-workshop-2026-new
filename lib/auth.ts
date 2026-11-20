@@ -22,6 +22,7 @@ export type User = {
   sub_status: string | null;
   sub_period_end: number | null;
   cancel_at_period_end: number;
+  onboarded: number;
 };
 
 export async function startSession(userId: string) {
@@ -49,7 +50,7 @@ export const getUser = cache(async (): Promise<User | null> => {
     const { payload } = await jwtVerify(token, secret());
     await ensureAdmin();
     return one<User>(
-      `SELECT id,email,role,tokens,plan_id,stripe_customer_id,stripe_subscription_id,sub_status,sub_period_end,cancel_at_period_end
+      `SELECT id,email,role,tokens,plan_id,stripe_customer_id,stripe_subscription_id,sub_status,sub_period_end,cancel_at_period_end,onboarded
        FROM users WHERE id=?`,
       [String(payload.sub)],
     );

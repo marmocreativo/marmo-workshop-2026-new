@@ -25,7 +25,7 @@ export function StudioMobile({ s }: { s: StudioState }) {
         s={s}
         corner={
           <>
-            <button type="button" aria-label="Abrir biblioteca" onClick={() => setLibOpen(true)} className={cn(fab, "relative")}>
+            <button type="button" data-tour="library" aria-label="Abrir biblioteca" onClick={() => setLibOpen(true)} className={cn(fab, "relative")}>
               {needsMods && <span className="absolute inset-0 animate-ping rounded-full bg-primary/70" />}
               <span
                 className={cn(
@@ -36,7 +36,7 @@ export function StudioMobile({ s }: { s: StudioState }) {
                 <Layers className="size-5" />
               </span>
             </button>
-            <button type="button" aria-label="Abrir resultados" onClick={() => setGalOpen(true)} className={cn(fab, "relative")}>
+            <button type="button" data-tour="gallery" aria-label="Abrir resultados" onClick={() => setGalOpen(true)} className={cn(fab, "relative")}>
               {s.fresh.size > 0 && <span className="absolute inset-0 animate-ping rounded-full bg-primary/70" />}
               <span
                 className={cn(
@@ -75,6 +75,7 @@ export function StudioMobile({ s }: { s: StudioState }) {
         onReuse={s.reuse}
         onSavePreset={(g, name) => s.savePresetFromGeneration(g.id, name)}
         onVisibility={s.setVisibility}
+        banner={s.tour.step === "result" ? "¡Este es tu resultado! Míralo en grande. Ciérralo cuando quieras para continuar con el tutorial." : undefined}
       />
     </div>
   );

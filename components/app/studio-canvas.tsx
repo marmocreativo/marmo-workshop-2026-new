@@ -162,7 +162,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
           // eslint-disable-next-line @next/next/no-img-element
           <img src={s.preview} alt="Foto a editar" className="absolute inset-0 size-full object-cover" />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 pb-64 text-center text-white/70">
+          <div data-tour="upload" className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 pb-64 text-center text-white/70">
             <ImagePlus className="size-12" />
             <p className="text-base font-medium text-white">Arrastra una foto aquí</p>
             <p className="text-sm">o pégala con Ctrl+V</p>
@@ -351,7 +351,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
 
         {/* Overlay inferior con los controles, siempre fijo abajo */}
         <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/70 to-transparent px-4 pt-24 pb-4">
-          <div className="pointer-events-auto mx-auto flex max-w-2xl flex-col gap-2">
+          <div data-tour="controls" className="pointer-events-auto mx-auto flex max-w-2xl flex-col gap-2">
             <input
               value={s.freeText}
               onChange={(e) => s.setFreeText(e.target.value)}
@@ -395,7 +395,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
                 </Link>
               )}
             </div>
-            <Button className="h-12 w-full rounded-2xl text-base" disabled={!s.canProcess} onClick={s.process}>
+            <Button data-tour="process" className="h-12 w-full rounded-2xl text-base" disabled={!s.canProcess} onClick={s.process}>
               {s.busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
               {!s.canAfford
                   ? "Tokens insuficientes"

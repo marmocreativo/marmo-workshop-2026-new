@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Bookmark, Plus, Trash2, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fileUrl } from "@/lib/client";
+import { api, fileUrl } from "@/lib/client";
+import type { CommunityPreset } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { ModifierEditor } from "./modifier-editor";
 import { ModifierBrowser } from "./modifier-picker";
-import { PresetCards, PresetSaveDialog } from "./preset-cards";
+import { CommunityPresetCards, PresetCards, PresetSaveDialog } from "./preset-cards";
 import type { StudioState } from "./use-studio";
 
 type Tab = "mods" | "presets" | "images";
@@ -23,6 +24,14 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
   const [editorOpen, setEditorOpen] = useState(false);
   const [saveOpen, setSaveOpen] = useState(false);
   const [trash, setTrash] = useState(false);
+  const [community, setCommunity] = useState<CommunityPreset[]>([]);
+
+  // Presets públicos de la comunidad, para empezar sin tener que armar nada.
+  useEffect(() => {
+    api<{ presets: CommunityPreset[] }>("/api/community/presets")
+      .then((r) => setCommunity(r.presets.slice(0, 24)))
+      .catch(() => {});
+  }, []);
 
   const done = s.gens.filter((g) => g.result_file);
   // Imágenes ya usadas. Las referencias tienen borrado suave (papelera).
@@ -76,15 +85,36 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
       )}
 
       {tab === "presets" && (
-        <PresetCards
-          presets={s.presets}
-          onApply={(p) => {
-            s.applyPreset(p);
-            onClose?.();
-          }}
-          onDelete={s.deletePreset}
-          onTogglePublic={(p) => s.setPresetPublic(p.id, !p.is_public)}
-        />
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-2">
+          {s.tour.step === "preset" && (
+            <p className="rounded-xl bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
+              {community.length > 0 || s.presets.length > 0
+                ? "Toca un preset (por ejemplo, uno de la comunidad) para aplicarlo a tu foto."
+                : "Aún no hay presets: ve a la pestaña Modificadores y elige uno."}
+            </p>
+          )}
+          <PresetCards
+            presets={s.presets}
+            onApply={(p) => {
+              s.applyPreset(p);
+              onClose?.();
+            }}
+            onDelete={s.deletePreset}
+            onTogglePublic={(p) => s.setPresetPublic(p.id, !p.is_public)}
+          />
+          {community.length > 0 && (
+            <section className="space-y-2">
+              <h3 className="text-xs font-semibold text-muted-foreground uppercase">De la comunidad</h3>
+              <CommunityPresetCards
+                presets={community}
+                onUse={async (p) => {
+                  await s.applyCommunityPreset(p);
+                  onClose?.();
+                }}
+              />
+            </section>
+          )}
+        </div>
       )}
 
       {tab === "images" && (

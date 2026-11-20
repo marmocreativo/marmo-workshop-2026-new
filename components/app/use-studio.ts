@@ -6,7 +6,7 @@ import { api, fileUrl, jsonBody, resizeImage } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { MODELS, getModel, resolveRatio } from "@/lib/models";
 import { tokensFor } from "@/lib/tokens";
-import type { Generation, Preset } from "@/lib/types";
+import type { CommunityPreset, Generation, Modifier, Preset } from "@/lib/types";
 import type { BillingMe } from "./billing-panel";
 import { emitBalance, requestBalanceRefresh } from "@/lib/balance";
 import { useLibrary } from "./use-library";
@@ -16,7 +16,9 @@ export type ReusePart = "reference" | "result" | "modifiers" | "text" | "model";
 type GenerateResult = { id: string; resultFile: string; kind: "image" | "video" };
 
 // Estado y acciones del Studio, compartidos entre la vista móvil y la de escritorio.
-export function useStudio(initialRef?: string) {
+export type TourStep = "photo" | "preset" | "process" | "wait" | "result" | "edit" | "final";
+
+export function useStudio(initialRef?: string, onboarding = false) {
   const library = useLibrary();
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -59,8 +61,12 @@ export function useStudio(initialRef?: string) {
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [gens, setGens] = useState<Generation[]>([]);
   const [openId, setOpenIdRaw] = useState<string | null>(null);
+  // Tutorial: "guide" (foto → preset → procesar) y luego result → edit → final, que avanzan por acciones del usuario.
+  const [tourOn, setTourOn] = useState(onboarding);
+  const [tourPhase, setTourPhase] = useState<"guide" | "result" | "edit" | "final">("guide");
   const setOpenId = useCallback((id: string | null) => {
     setOpenIdRaw(id);
+    if (!id) setTourPhase((p) => (p === "result" ? "edit" : p)); // al cerrar el resultado grande, sigue la explicación de ajustes
     if (id) setFresh((f) => (f.has(id) ? new Set([...f].filter((x) => x !== id)) : f));
   }, []);
 
@@ -163,7 +169,11 @@ export function useStudio(initialRef?: string) {
       const out = await api<GenerateResult>("/api/generate", { method: "POST", body: form });
       setResult(out);
       await Promise.all([loadGens(), library.refresh()]).catch(() => {});
-      setFresh((f) => new Set(f).add(out.id)); // sin abrir el modal: la galería pulsa para avisar
+      if (tourOn && tourPhase === "guide") {
+        // En el tutorial el primer resultado sí se abre en grande.
+        setTourPhase("result");
+        setOpenId(out.id);
+      } else setFresh((f) => new Set(f).add(out.id)); // sin abrir el modal: la galería pulsa para avisar
     } catch (e) {
       toast.error((e as Error).message);
       loadGens().catch(() => {});
@@ -258,6 +268,29 @@ export function useStudio(initialRef?: string) {
     }
   }
 
+  // Usa un preset público: si ya lo tienes lo aplica; si no, lo copia a tu biblioteca (con sus modificadores) y lo aplica.
+  async function applyCommunityPreset(c: CommunityPreset) {
+    try {
+      const own = library.presets.find((p) => p.name === c.name && (p.free_text ?? "") === (c.free_text ?? ""));
+      if (own) return applyPreset(own);
+      const { id } = await api<{ id: string }>(`/api/community/presets/${c.id}/clone`, { method: "POST" });
+      const [m, p] = await Promise.all([
+        api<{ modifiers: Modifier[] }>("/api/modifiers"),
+        api<{ presets: Preset[] }>("/api/presets"),
+      ]);
+      library.setModifiers(m.modifiers);
+      library.refresh().catch(() => {});
+      const fresh = p.presets.find((x) => x.id === id);
+      if (!fresh) return;
+      const alive = new Set(m.modifiers.map((x) => x.id));
+      setSelected(new Set(fresh.modifier_ids.filter((x) => alive.has(x))));
+      setFreeText(fresh.free_text ?? "");
+      toast.success(`Preset "${fresh.name}" aplicado`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
   async function deletePreset(id: string) {
     try {
       await api(`/api/presets/${id}`, { method: "DELETE" });
@@ -285,8 +318,26 @@ export function useStudio(initialRef?: string) {
     toast.success("Listo, ya está en el editor");
   }
 
+  const tourStep: TourStep | null = !tourOn
+    ? null
+    : tourPhase !== "guide"
+      ? tourPhase
+      : !image
+        ? "photo"
+        : pending > 0
+          ? "wait"
+          : selected.size === 0
+            ? "preset"
+            : "process";
+  const finishTour = () => {
+    setTourOn(false);
+    api("/api/onboarding", { method: "POST" }).catch(() => {});
+  };
+  const tour = { step: tourStep, finish: finishTour, next: () => setTourPhase((p) => (p === "edit" ? "final" : p)) };
+
   return {
     ...library,
+    tour,
     image,
     setImage,
     preview,
@@ -320,6 +371,7 @@ export function useStudio(initialRef?: string) {
     setVisibility,
     reuse,
     applyPreset,
+    applyCommunityPreset,
     savePreset,
     savePresetFromGeneration,
     deletePreset,

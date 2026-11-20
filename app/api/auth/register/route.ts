@@ -15,7 +15,7 @@ export const POST = handle(async (req: Request) => {
   if (email === adminEmail()) throw new HttpError(403, "Ese correo está reservado");
   if (await one("SELECT id FROM users WHERE email=?", [email])) throw new HttpError(409, "Ese correo ya está registrado");
   const id = uid();
-  await run("INSERT INTO users(id,email,password_hash,created_at) VALUES(?,?,?,?)", [
+  await run("INSERT INTO users(id,email,password_hash,created_at,onboarded) VALUES(?,?,?,?,0)", [
     id,
     email,
     await bcrypt.hash(parsed.data.password, 10),
