@@ -10,6 +10,7 @@ const schema = z.object({
   isPublic: z.boolean().optional(),
   text: z.string().trim().min(1).max(500).optional(),
   categoryId: z.string().optional(),
+  keepOriginal: z.boolean().optional(), // editar sin archivar el original (se usa desde el Studio)
 });
 
 async function owned(id: string, userId: string) {
@@ -46,7 +47,7 @@ export const PATCH = handle(async (req: Request, { params }: Ctx) => {
       thumbs: [],
     };
     await batch([
-      { sql: "UPDATE modifiers SET archived=1 WHERE id=?", args: [current.id] },
+      ...(body.data.keepOriginal ? [] : [{ sql: "UPDATE modifiers SET archived=1 WHERE id=?", args: [current.id] }]),
       {
         sql: "INSERT INTO modifiers(id,user_id,category_id,text,favorite,parent_id,origin_file,created_at) VALUES(?,?,?,?,?,?,?,?)",
         args: [

@@ -2,6 +2,7 @@
 
 import { Play, Sparkles } from "lucide-react";
 import { fileUrl } from "@/lib/client";
+import { cn } from "@/lib/utils";
 import type { StudioState } from "./use-studio";
 
 // Resultados del Studio: columna en escritorio, drawer en móvil.
@@ -12,12 +13,12 @@ export function GalleryPanel({ s, onOpen }: { s: StudioState; onOpen?: () => voi
         <h2 className="text-lg font-semibold tracking-tight">Galería</h2>
       </header>
       <ul className="grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto">
-        {s.busy && (
-          <li className="flex aspect-[4/5] flex-col items-center justify-center gap-2 rounded-2xl bg-muted text-sm text-muted-foreground">
+        {Array.from({ length: s.pending }, (_, i) => (
+          <li key={`p${i}`} className="flex aspect-[4/5] flex-col items-center justify-center gap-2 rounded-2xl bg-muted text-sm text-muted-foreground">
             <Sparkles className="size-7 animate-pulse text-primary" />
             Generando…
           </li>
-        )}
+        ))}
         {s.gens.length === 0 && !s.busy && (
           <li className="col-span-2 py-16 text-center text-sm text-muted-foreground">Tus resultados aparecerán aquí.</li>
         )}
@@ -29,8 +30,14 @@ export function GalleryPanel({ s, onOpen }: { s: StudioState; onOpen?: () => voi
                 onOpen?.();
                 s.setOpenId(g.id);
               }}
-              className="relative block aspect-[4/5] w-full overflow-hidden rounded-2xl border bg-muted transition-transform hover:scale-[1.01]"
+              className={cn(
+                "relative block aspect-[4/5] w-full overflow-hidden rounded-2xl border bg-muted transition-transform hover:scale-[1.01]",
+                s.fresh.has(g.id) && "animate-pulse border-primary ring-2 ring-primary",
+              )}
             >
+              {s.fresh.has(g.id) && (
+                <span className="absolute top-2 left-2 z-10 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">Nuevo</span>
+              )}
               {g.result_file ? (
                 g.kind === "video" ? (
                   <>

@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
-import { Camera, ChevronDown, ClipboardPaste, Eraser, FolderOpen, ImagePlus, Loader2, Sparkles, X } from "lucide-react";
+import { Camera, ChevronDown, ClipboardPaste, Eraser, FolderOpen, ImagePlus, Loader2, Pencil, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getModel, MODELS } from "@/lib/models";
 import { cn } from "@/lib/utils";
+import type { Modifier } from "@/lib/types";
 import { CameraDialog } from "./camera-dialog";
+import { ModifierEditor } from "./modifier-editor";
 import type { StudioState } from "./use-studio";
 
 const ICON_BTN = "flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur hover:bg-black/80";
@@ -62,6 +64,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
   // Móvil: solo se ven los pointers; al tocar uno se abre su popup (arrastrable) con el modificador.
   const touch = !!corner;
   const [open, setOpen] = useState<string | null>(null);
+  const [editing, setEditing] = useState<Modifier | null>(null);
   const [pillPos, setPillPos] = useState<Record<string, Pt>>({});
   const tap = useRef({ x: 0, y: 0, moved: false });
   const pillDrag = useRef<{ id: string; dx: number; dy: number } | null>(null);
@@ -77,21 +80,29 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
 
   const model = getModel(s.model) ?? MODELS[0];
   const rows = Math.max(1, Math.floor((size.h - OVERLAY_SAFE - top0) / ROW_STEP));
+  // Alto disponible para repartir pointers y píldoras a lo largo de toda la foto (sin tocar el overlay inferior).
+  const avail = Math.max(ROW_STEP, size.h - OVERLAY_SAFE - top0);
+  const n = s.chosen.length;
+  const mobileRows = Math.max(1, Math.ceil(n / 3));
+  const mobileStep = Math.min(Math.max(avail / mobileRows, 48), 120);
 
-  // Geometría de cada píldora: lado alterno, filas hacia abajo; el ancla de la línea es su esquina interior inferior.
+  // Geometría de cada píldora: lados alternos y repartidas por igual en vertical; el ancla de la línea es su esquina interior inferior.
   const layout = s.chosen.map((m, i) => {
     const right = i % 2 === 1;
     const slot = Math.floor(i / 2);
     const row = slot % rows;
     const layer = Math.floor(slot / rows);
+    const sideCount = right ? Math.floor(n / 2) : Math.ceil(n / 2);
+    const perLayer = Math.max(1, Math.min(sideCount, rows));
+    const step = avail / perLayer;
     const edge = 16 + layer * 24;
-    const top = top0 + row * ROW_STEP;
+    const top = top0 + row * step + Math.max(0, (step - PILL_H) / 2);
     const ax = right ? size.w - edge - PILL_W + 16 : edge + PILL_W - 16;
     const ay = top + PILL_H;
     const saved = pts[m.id];
     // Móvil: los pointers se reparten en cuadrícula en la parte alta de la foto.
-    const px = saved ? saved.x * size.w : touch ? size.w * (0.2 + (i % 3) * 0.3) : ax + (right ? -1 : 1) * (56 + slot * 14);
-    const py = saved ? saved.y * size.h : touch ? top0 + 24 + Math.floor(i / 3) * 48 : ay + 24;
+    const px = saved ? saved.x * size.w : touch ? size.w * (0.18 + (i % 3) * 0.32 + (Math.floor(i / 3) % 2) * 0.08) : ax + (right ? -1 : 1) * (56 + (slot % 3) * 44);
+    const py = saved ? saved.y * size.h : touch ? top0 + mobileStep * (Math.floor(i / 3) + 0.5) : ay + 24;
     // Popup móvil: junto al pointer salvo que el usuario lo haya movido.
     const pp = pillPos[m.id];
     const pl = pp ? pp.x * size.w : Math.min(Math.max(px - 24, 8), Math.max(8, size.w - POPUP_W - 8));
@@ -243,6 +254,14 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
                   </span>
                   <button
                     type="button"
+                    aria-label="Editar modificador"
+                    onClick={() => setEditing(l.m)}
+                    className="flex size-7 shrink-0 items-center justify-center rounded-full bg-white/20 active:bg-primary"
+                  >
+                    <Pencil className="size-3.5" />
+                  </button>
+                  <button
+                    type="button"
                     aria-label="Quitar modificador"
                     onClick={() => {
                       setOpen(null);
@@ -273,6 +292,15 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
                 </span>
                 <span className="block truncate text-xs leading-5 group-hover:whitespace-normal">{l.m.text}</span>
               </span>
+              <button
+                type="button"
+                aria-label="Editar modificador"
+                title="Editar (crea uno nuevo)"
+                onClick={() => setEditing(l.m)}
+                className="hidden size-5 shrink-0 items-center justify-center rounded-full bg-white/20 hover:bg-primary group-hover:flex"
+              >
+                <Pencil className="size-3" />
+              </button>
               <button
                 type="button"
                 aria-label="Quitar modificador"
@@ -363,19 +391,42 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
                 </Link>
               )}
             </div>
-            <Button className="h-12 w-full rounded-2xl text-base" disabled={s.busy || !s.canProcess} onClick={s.process}>
+            <Button className="h-12 w-full rounded-2xl text-base" disabled={!s.canProcess} onClick={s.process}>
               {s.busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
-              {s.busy
-                ? "Procesando… puede tardar un minuto"
-                : !s.canAfford
+              {!s.canAfford
                   ? "Tokens insuficientes"
                   : s.image && s.selected.size === 0
                     ? "Elige al menos un modificador"
-                    : "Procesar"}
+                    : s.busy
+                      ? `Procesar otra (${s.pending} en proceso)`
+                      : "Procesar"}
             </Button>
           </div>
         </div>
       </div>
+      <ModifierEditor
+        open={!!editing}
+        onOpenChange={(o) => !o && setEditing(null)}
+        categories={s.categories}
+        editing={editing}
+        keepOriginal
+        onSaved={async (created) => {
+          const old = editing;
+          await s.applyCreated(created);
+          const fresh = created?.[0];
+          if (old && fresh) {
+            // La versión nueva ocupa el lugar de la original: conserva la posición de su pointer y popup.
+            s.setSelected((sel) => {
+              const next = new Set(sel);
+              next.delete(old.id);
+              return next;
+            });
+            setPts((p) => (p[old.id] ? { ...p, [fresh.id]: p[old.id] } : p));
+            setPillPos((p) => (p[old.id] ? { ...p, [fresh.id]: p[old.id] } : p));
+            setOpen((o) => (o === old.id ? fresh.id : o));
+          }
+        }}
+      />
       <CameraDialog open={cameraOpen} onOpenChange={setCameraOpen} onCapture={s.setImage} />
     </section>
   );

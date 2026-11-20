@@ -8,6 +8,7 @@ const TABS = [
   { href: "/admin", label: "Resumen", exact: true },
   { href: "/admin/planes", label: "Planes y tokens" },
   { href: "/admin/usuarios", label: "Usuarios" },
+  { href: "/admin/slider", label: "Slider del Home" },
 ];
 
 export function AdminNav() {

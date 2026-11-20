@@ -36,8 +36,16 @@ export function StudioMobile({ s }: { s: StudioState }) {
                 <Layers className="size-5" />
               </span>
             </button>
-            <button type="button" aria-label="Abrir resultados" onClick={() => setGalOpen(true)} className={fab}>
-              <Images className="size-5" />
+            <button type="button" aria-label="Abrir resultados" onClick={() => setGalOpen(true)} className={cn(fab, "relative")}>
+              {s.fresh.size > 0 && <span className="absolute inset-0 animate-ping rounded-full bg-primary/70" />}
+              <span
+                className={cn(
+                  "relative flex size-full items-center justify-center rounded-full",
+                  s.fresh.size > 0 && "bg-primary ring-2 ring-white",
+                )}
+              >
+                <Images className="size-5" />
+              </span>
             </button>
           </>
         }

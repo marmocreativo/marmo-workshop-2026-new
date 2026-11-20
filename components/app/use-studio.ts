@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "@/lib/alerts";
 import { api, fileUrl, jsonBody, resizeImage } from "@/lib/client";
 import { useRouter } from "next/navigation";
@@ -28,8 +28,11 @@ export function useStudio(initialRef?: string) {
   const ratio = resolveRatio(getModel(model) ?? MODELS[0], ratioChoice);
   const router = useRouter();
   const [billing, setBilling] = useState<BillingMe | null>(null);
+  const balRef = useRef(0); // saldo más reciente, para descontar varias peticiones seguidas sin esperar el render
   const loadBilling = useCallback(async () => {
-    setBilling(await api<BillingMe>("/api/billing/me"));
+    const b = await api<BillingMe>("/api/billing/me");
+    balRef.current = b.account.tokens;
+    setBilling(b);
   }, []);
   useEffect(() => {
     loadBilling().catch(() => {});
@@ -38,6 +41,7 @@ export function useStudio(initialRef?: string) {
   useEffect(() => {
     const onSet = (e: Event) => {
       const tokens = (e as CustomEvent<number>).detail;
+      balRef.current = tokens;
       setBilling((b) => (b ? { ...b, account: { ...b.account, tokens } } : b));
     };
     window.addEventListener("mw:balance", onSet);
@@ -47,10 +51,18 @@ export function useStudio(initialRef?: string) {
   const modelDef = getModel(model);
   const tokenCost = billing && modelDef ? tokensFor(modelDef, ratio, billing.pricing) : null;
   const canAfford = !billing || billing.account.bypass || (tokenCost !== null && billing.account.tokens >= tokenCost);
-  const [busy, setBusy] = useState(false);
+  // Se pueden lanzar varias peticiones a la vez: `pending` cuenta las que siguen en proceso.
+  const [pending, setPending] = useState(0);
+  const busy = pending > 0;
+  // Resultados nuevos que el usuario aún no ha abierto (la galería los marca con una pulsación).
+  const [fresh, setFresh] = useState<Set<string>>(new Set());
   const [result, setResult] = useState<GenerateResult | null>(null);
   const [gens, setGens] = useState<Generation[]>([]);
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openId, setOpenIdRaw] = useState<string | null>(null);
+  const setOpenId = useCallback((id: string | null) => {
+    setOpenIdRaw(id);
+    if (id) setFresh((f) => (f.has(id) ? new Set([...f].filter((x) => x !== id)) : f));
+  }, []);
 
   const loadGens = useCallback(async () => {
     const r = await api<{ generations: Generation[] }>("/api/generations");
@@ -138,9 +150,9 @@ export function useStudio(initialRef?: string) {
   async function process() {
     if (!image) return toast.error("Primero agrega una foto");
     if (selected.size === 0) return toast.error("Elige al menos un modificador");
-    setBusy(true);
+    setPending((n) => n + 1);
     // El servidor cobra al recibir la petición: se refleja de inmediato y luego se reconcilia con el saldo real.
-    if (billing && !billing.account.bypass && tokenCost) emitBalance(Math.max(0, billing.account.tokens - tokenCost));
+    if (billing && !billing.account.bypass && tokenCost) emitBalance(Math.max(0, balRef.current - tokenCost));
     try {
       const form = new FormData();
       form.set("image", await resizeImage(image));
@@ -151,12 +163,12 @@ export function useStudio(initialRef?: string) {
       const out = await api<GenerateResult>("/api/generate", { method: "POST", body: form });
       setResult(out);
       await Promise.all([loadGens(), library.refresh()]).catch(() => {});
-      setOpenId(out.id);
+      setFresh((f) => new Set(f).add(out.id)); // sin abrir el modal: la galería pulsa para avisar
     } catch (e) {
       toast.error((e as Error).message);
       loadGens().catch(() => {});
     } finally {
-      setBusy(false);
+      setPending((n) => Math.max(0, n - 1));
       loadBilling().catch(() => {});
       requestBalanceRefresh(); // saldo real (por si hubo devolución)
       router.refresh();
@@ -295,6 +307,8 @@ export function useStudio(initialRef?: string) {
     ratio,
     setRatio,
     busy,
+    pending,
+    fresh,
     result,
     setResult,
     gens,

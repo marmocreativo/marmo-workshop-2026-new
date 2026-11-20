@@ -23,6 +23,8 @@ CREATE TABLE IF NOT EXISTS presets(
   id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL, free_text TEXT, ref_file TEXT,
   modifier_ids TEXT NOT NULL, created_at INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_presets_user ON presets(user_id, created_at);
+CREATE TABLE IF NOT EXISTS hero_images(
+  id TEXT PRIMARY KEY, file TEXT NOT NULL, sort INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS plans(
   id TEXT PRIMARY KEY, name TEXT NOT NULL, description TEXT, price_cents INTEGER NOT NULL, tokens INTEGER NOT NULL,
   features TEXT NOT NULL DEFAULT '[]', highlighted INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1,
@@ -68,7 +70,7 @@ const MIGRATIONS = [
   "ALTER TABLE generations ADD COLUMN tokens_spent INTEGER",
   "ALTER TABLE presets ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0",
 ];
-const DB_VERSION = 8; // súbelo al agregar migraciones para que el servidor en caliente las aplique
+const DB_VERSION = 9; // súbelo al agregar migraciones para que el servidor en caliente las aplique
 
 const g = globalThis as unknown as { __db?: Client; __dbReady?: Promise<unknown>; __dbVer?: number };
 

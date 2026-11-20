@@ -24,6 +24,8 @@ type Props = {
   onSaved: (created?: Modifier[]) => void | Promise<void>;
   /** Si el contexto aplica de inmediato lo guardado (p. ej. el Studio), el aviso lo indica. */
   appliesOnScan?: boolean;
+  /** Al editar, el original queda intacto en la biblioteca (solo se crea uno nuevo). */
+  keepOriginal?: boolean;
 };
 
 export function ModifierEditor({
@@ -34,6 +36,7 @@ export function ModifierEditor({
   editing,
   onSaved,
   appliesOnScan,
+  keepOriginal,
 }: Props) {
   const [mode, setMode] = useState<"write" | "analyze">("write");
   const [categoryId, setCategoryId] = useState("");
@@ -103,8 +106,14 @@ export function ModifierEditor({
     setBusy(true);
     try {
       if (editing) {
-        await api(`/api/modifiers/${editing.id}`, { method: "PATCH", body: jsonBody({ text, categoryId }) });
+        const r = await api<{ modifier: Modifier }>(`/api/modifiers/${editing.id}`, {
+          method: "PATCH",
+          body: jsonBody({ text, categoryId, keepOriginal }),
+        });
         toast.success("Guardado como un modificador nuevo");
+        await onSaved([r.modifier]);
+        onOpenChange(false);
+        return;
       } else {
         await api("/api/modifiers", { method: "POST", body: jsonBody({ items: [{ categoryId, text }] }) });
         toast.success("Modificador creado");
@@ -177,7 +186,7 @@ export function ModifierEditor({
           <DialogTitle>{editing ? "Editar modificador" : "Nuevo modificador"}</DialogTitle>
           <DialogDescription>
             {editing
-              ? "Al guardar se crea un registro nuevo; el original se conserva en tu historial."
+              ? "Al guardar se crea un registro nuevo; el original no se modifica."
               : "Escríbelo a mano o deja que Gemini lo describa desde una foto."}
           </DialogDescription>
         </DialogHeader>

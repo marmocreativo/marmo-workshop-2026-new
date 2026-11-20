@@ -47,11 +47,9 @@ const glass = "border border-white/10 bg-white/[0.06] backdrop-blur-md";
 export default async function Home() {
   const user = await getUser();
   const [plans, packs, pricing] = await Promise.all([listPlans(), listPacks(), getPricing()]);
-  // Imágenes del hero: portadas de los presets que los usuarios hicieron públicos (si no hay, la imagen fija).
-  const heroRows = await query<{ id: string }>(
-    "SELECT id FROM presets WHERE is_public=1 AND ref_file IS NOT NULL ORDER BY created_at DESC LIMIT 8",
-  ).catch(() => []);
-  const heroImages = heroRows.map((r) => `/api/public/preset/${r.id}/cover`);
+  // Imágenes del hero: las que sube el administrador (Admin → Slider del Home). Sin ninguna, la imagen fija.
+  const heroRows = await query<{ id: string }>("SELECT id FROM hero_images WHERE active=1 ORDER BY sort, created_at").catch(() => []);
+  const heroImages = heroRows.map((r) => `/api/public/hero/${r.id}`);
   const nanoTokens = tokensFor(MODELS[0], "auto", pricing) ?? 1;
   const cta =user ? { href: "/studio", label: "Abrir Studio" } : { href: "/registro", label: "Empezar ahora" };
 
