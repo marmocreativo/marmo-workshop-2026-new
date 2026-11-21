@@ -1,4 +1,4 @@
-﻿import type { Metadata, Viewport } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -6,15 +6,18 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  icons: { icon: "/logo.svg" },
-  title: "Marmo Workshop â€” Photo Studio con IA",
-  description: "Crea y edita fotografÃ­as con IA usando modificadores de estilo, luz, pose y mÃ¡s.",
+  applicationName: "Marmo Workshop",
+  icons: { icon: "/logo.svg", apple: "/icons/apple-touch-icon.png" },
+  title: "Marmo Workshop — Photo Studio con IA",
+  description: "Crea y edita fotografías con IA usando modificadores de estilo, luz, pose y más.",
+  appleWebApp: { capable: true, title: "Marmo", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#0f0f0f",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -1,5 +1,6 @@
 import { AccountActions } from "@/components/app/account-actions";
 import { BillingPanel } from "@/components/app/billing-panel";
+import { PwaCard } from "@/components/app/pwa-card";
 import { Badge } from "@/components/ui/badge";
 import { requireUser } from "@/lib/auth";
 
@@ -27,6 +28,7 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
       {pago === "cancelado" && <p className="rounded-2xl bg-muted p-3 text-sm">No se completó el pago. No se hizo ningún cargo.</p>}
 
       <BillingPanel justPaid={pago === "ok"} />
+      <PwaCard />
       <AccountActions />
     </div>
   );

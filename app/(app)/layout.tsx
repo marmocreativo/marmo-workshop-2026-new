@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BottomNav, DesktopRail } from "@/components/app/bottom-nav";
 import { TokenChip } from "@/components/app/token-chip";
 import { Logo } from "@/components/logo";
+import { PwaManager } from "@/components/pwa-manager";
 import { requireUser } from "@/lib/auth";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -9,6 +10,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const isAdmin = user.role === "admin";
   return (
     <div className="min-h-dvh lg:pl-20">
+      <PwaManager autoOffer={!!user.onboarded} />
       <DesktopRail isAdmin={isAdmin} tokens={user.tokens} />
       <main className="mx-auto flex min-h-dvh w-full max-w-xl flex-col px-4 pt-3 pb-20 lg:max-w-none lg:px-5 lg:pt-5 lg:pb-5">
         <div className="mb-3 flex items-center justify-between lg:hidden">

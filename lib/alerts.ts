@@ -72,3 +72,43 @@ export async function noTokensPopup(): Promise<"plan" | "tokens" | null> {
   });
   return r.isConfirmed ? "plan" : r.isDenied ? "tokens" : null;
 }
+
+/** Ofrece instalar la app. En iPhone/iPad (sin botón de instalar) muestra los pasos. Devuelve true si pide instalar. */
+export async function installPopup(ios: boolean) {
+  if (ios) {
+    await Swal.fire({
+      ...theme,
+      icon: "info",
+      title: "Instala Marmo Workshop",
+      html: "En Safari toca el botón <b>Compartir</b> (el cuadro con la flecha) y elige <b>«Añadir a pantalla de inicio»</b>.",
+      confirmButtonText: "Entendido",
+    });
+    return false;
+  }
+  const r = await Swal.fire({
+    ...theme,
+    icon: "question",
+    title: "Instala Marmo Workshop",
+    text: "Ábrela como una app: acceso directo en tu pantalla, ventana propia y carga más rápida.",
+    showCancelButton: true,
+    confirmButtonText: "Instalar",
+    cancelButtonText: "Ahora no",
+    reverseButtons: true,
+  });
+  return r.isConfirmed;
+}
+
+/** Avisa de una versión nueva. Devuelve true si el usuario quiere actualizar ya. */
+export async function updatePopup(version: string | null) {
+  const r = await Swal.fire({
+    ...theme,
+    icon: "info",
+    title: "Hay una nueva versión",
+    text: version ? `Marmo Workshop ${version} está lista. Actualiza para tener las últimas mejoras.` : "Actualiza para tener las últimas mejoras.",
+    showCancelButton: true,
+    confirmButtonText: "Actualizar ahora",
+    cancelButtonText: "Después",
+    reverseButtons: true,
+  });
+  return r.isConfirmed;
+}
