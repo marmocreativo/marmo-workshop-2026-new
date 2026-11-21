@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Activity, BarChart3, Coins, Users, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { DedupeButton } from "@/components/admin/dedupe-button";
 
 const PLACEHOLDERS = [
   { icon: Users, title: "Usuarios", text: "Altas, suscripciones activas y cancelaciones." },
@@ -38,6 +39,8 @@ export default function AdminPage() {
           </div>
         </Link>
       </div>
+
+      <DedupeButton />
 
       <p className="text-sm text-muted-foreground">Análisis de comportamiento — en construcción:</p>
       <div className="grid gap-3 sm:grid-cols-2">

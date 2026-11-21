@@ -157,12 +157,12 @@ export function BillingPanel({ justPaid }: { justPaid: boolean }) {
       </section>
 
       {/* Planes */}
-      <section className="space-y-3">
+      <section id="planes" className="scroll-mt-6 space-y-3">
         <div>
           <h2 className="text-lg font-semibold">Planes mensuales</h2>
           <p className="text-sm text-muted-foreground">Se renuevan solos cada mes y puedes cancelar cuando quieras. Los tokens no caducan.</p>
         </div>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((p) => {
             const isCurrent = hasSub && p.id === account.plan_id;
             return (
@@ -211,7 +211,7 @@ export function BillingPanel({ justPaid }: { justPaid: boolean }) {
       </section>
 
       {/* Recargas */}
-      <section className="space-y-3">
+      <section id="tokens" className="scroll-mt-6 space-y-3">
         <div>
           <h2 className="text-lg font-semibold">Recargar tokens</h2>
           <p className="text-sm text-muted-foreground">Pago único, sin suscripción. Los tokens nunca caducan.</p>

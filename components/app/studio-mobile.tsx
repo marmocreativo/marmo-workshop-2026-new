@@ -15,7 +15,7 @@ export function StudioMobile({ s }: { s: StudioState }) {
   const [libOpen, setLibOpen] = useState(false);
   const [galOpen, setGalOpen] = useState(false);
   // Hay foto pero ningún modificador: el botón de la biblioteca pulsa para guiar al usuario.
-  const needsMods = !!s.image && s.selected.size === 0;
+  const needsMods = !!s.image && !s.hasInput;
 
   const fab = "flex size-11 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur hover:bg-black/80";
 

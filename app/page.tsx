@@ -1,3 +1,5 @@
+import { existsSync } from "node:fs";
+import path from "node:path";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check, Images, Layers, ScanSearch, Sparkles } from "lucide-react";
@@ -7,28 +9,33 @@ import { query } from "@/lib/db";
 import { buttonVariants } from "@/components/ui/button";
 import { getUser } from "@/lib/auth";
 import { getPricing, listPacks, listPlans } from "@/lib/billing";
-import { DEFAULT_CATEGORIES } from "@/lib/defaults";
-import { MODELS } from "@/lib/models";
+import { CategoryIcon } from "@/components/app/category-icon";
+import { MODELS, modelIcon } from "@/lib/models";
 import { formatMxn, formatTokens, tokensFor } from "@/lib/tokens";
 import { cn } from "@/lib/utils";
 
+// Imágenes 1:1 de las tarjetas: se colocan en public/features/<img>.jpg (o .png / .webp). Sin archivo, se ve un marcador.
 const FEATURES = [
   {
+    img: "photo-studio",
     icon: Sparkles,
     title: "Photo Studio",
     text: "Sube la foto de una persona o un grupo y transfórmala con la IA que prefieras.",
   },
   {
+    img: "modificadores",
     icon: Layers,
     title: "Biblioteca de modificadores",
     text: "Iluminación, pose, encuadre, lente, outfit, cabello, fondo y más. Crea, edita y marca favoritos.",
   },
   {
+    img: "analiza",
     icon: ScanSearch,
     title: "Analiza una imagen",
     text: "Gemini describe una foto y la convierte en modificadores listos para reutilizar.",
   },
   {
+    img: "galeria",
     icon: Images,
     title: "Galería con memoria",
     text: "Cada resultado recuerda qué modificadores usaste, para saber cuáles funcionan mejor.",
@@ -42,7 +49,58 @@ const NAV = [
   { href: "#precio", label: "Precio" },
 ];
 
-const glass = "border border-white/10 bg-white/[0.06] backdrop-blur-md";
+const glass = "bg-white/[0.06] backdrop-blur-md";
+
+function featureImage(name: string) {
+  const ext = ["jpg", "jpeg", "png", "webp"].find((e) => existsSync(path.join(process.cwd(), "public", "features", `${name}.${e}`)));
+  return ext ? `/features/${name}.${ext}` : null;
+}
+
+// Simula las píldoras y los pointers del Studio (decorativo). Coordenadas en px dentro de un recuadro de 20rem de ancho.
+const DEMO_PILLS: { slug: string; text: string; x: number; y: number; px: number; py: number }[] = [
+  { slug: "iluminacion", text: "Luz de neón magenta y azul", x: 110, y: 0, px: -70, py: 34 },
+  { slug: "pose-accion", text: "De perfil, mirando al horizonte", x: 130, y: 62, px: -20, py: 118 },
+  { slug: "outfit", text: "Chaqueta de cuero vintage", x: 100, y: 124, px: -120, py: 96 },
+  { slug: "fondo-escena", text: "Estudio con rayos láser", x: 125, y: 186, px: -60, py: 236 },
+  { slug: "efectos-de-lente", text: "Grano de película Kodak", x: 105, y: 248, px: -150, py: 190 },
+];
+
+function PillsDemo() {
+  return (
+    <div className="relative h-[17.5rem] w-full" aria-hidden>
+      <svg className="absolute inset-0 size-full overflow-visible">
+        {DEMO_PILLS.map((p) => (
+          <line
+            key={p.slug}
+            x1={p.x}
+            y1={p.y + 18}
+            x2={p.px}
+            y2={p.py}
+            stroke="white"
+            strokeOpacity={0.8}
+            strokeWidth={1.5}
+            style={{ filter: "drop-shadow(0 0 2px rgba(0,0,0,.8))" }}
+          />
+        ))}
+      </svg>
+      {DEMO_PILLS.map((p, i) => (
+        <div key={p.slug}>
+          <div
+            className="absolute flex h-9 max-w-[calc(100%-1rem)] items-center gap-1.5 rounded-[18px] border border-white/25 bg-black/60 px-3 text-xs text-white shadow-lg backdrop-blur-md"
+            style={{ left: p.x, top: p.y, right: 0 }}
+          >
+            <CategoryIcon slug={p.slug} className="size-3.5 shrink-0 text-primary" />
+            <span className="truncate">{p.text}</span>
+          </div>
+          <span className="absolute size-8 -translate-x-1/2 -translate-y-1/2" style={{ left: p.px, top: p.py }}>
+            <span className="absolute inset-0 animate-ping rounded-full bg-primary/60" style={{ animationDelay: `${i * 0.35}s` }} />
+            <span className="absolute inset-2 rounded-full border-2 border-white bg-primary shadow-[0_0_8px_rgba(0,0,0,.6)]" />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export default async function Home() {
   const user = await getUser();
@@ -52,13 +110,6 @@ export default async function Home() {
   const heroImages = heroRows.map((r) => `/api/public/hero/${r.id}`);
   const nanoTokens = tokensFor(MODELS[0], "auto", pricing) ?? 1;
   const cta =user ? { href: "/studio", label: "Abrir Studio" } : { href: "/registro", label: "Empezar ahora" };
-
-  // Cifras reales de la app (no inventadas).
-  const stats = [
-    { value: String(MODELS.length), label: "modelos de IA" },
-    { value: String(DEFAULT_CATEGORIES.length), label: "categorías de modificadores" },
-    { value: String(MODELS[0].ratios.length + 1), label: "proporciones de salida" },
-  ];
 
   return (
     <div className="bg-background">
@@ -134,29 +185,11 @@ export default async function Home() {
                 {cta.label} <ArrowRight />
               </Link>
             </div>
-
-            <dl className="mt-10 grid max-w-xl grid-cols-3 gap-3">
-              {stats.map((s) => (
-                <div key={s.label} className={cn("rounded-2xl p-3.5 lg:p-4", glass)}>
-                  <dd className="text-3xl font-medium tracking-tight lg:text-4xl">{s.value}</dd>
-                  <dt className="mt-1 text-[11px] leading-tight text-foreground/60 lg:text-xs">{s.label}</dt>
-                </div>
-              ))}
-            </dl>
           </div>
 
           {/* Tarjetas flotantes (escritorio) */}
           <aside className="hidden flex-col gap-4 lg:flex">
-            <div className={cn("rounded-3xl p-5", glass)}>
-              <p className="text-xs font-medium text-foreground/60">Modificadores</p>
-              <ul className="mt-3 flex flex-wrap gap-1.5">
-                {DEFAULT_CATEGORIES.map((c) => (
-                  <li key={c.slug} className="rounded-full bg-white/10 px-3 py-1 text-xs">
-                    {c.name}
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <PillsDemo />
             <div className={cn("rounded-3xl p-5", glass)}>
               <p className="text-xs font-medium text-foreground/60">Modelos disponibles</p>
               <p className="mt-1 text-5xl font-medium tracking-tight">{MODELS.length}+</p>
@@ -187,16 +220,26 @@ export default async function Home() {
         <h2 className="mt-2 max-w-2xl text-3xl font-medium tracking-tight text-balance lg:text-5xl">
           Todo lo que necesitas para dirigir cada toma.
         </h2>
-        <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {FEATURES.map(({ icon: Icon, title, text }) => (
-            <div key={title} className="rounded-3xl border bg-card p-6">
-              <div className="flex size-11 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-                <Icon className="size-5" />
+        <div className="mt-24 grid gap-x-3 gap-y-24 sm:grid-cols-2 lg:grid-cols-4">
+          {FEATURES.map(({ img, icon: Icon, title, text }) => {
+            const src = featureImage(img);
+            return (
+            <div key={title} className="relative rounded-3xl bg-card px-6 pt-24 pb-6">
+              {/* Imagen 1:1 que sobresale del borde superior de la tarjeta */}
+              <div className="absolute -top-14 left-6 size-32 overflow-hidden rounded-3xl border-4 border-background bg-primary/15 shadow-xl">
+                {src ? (
+                  <Image src={src} alt="" fill sizes="128px" className="object-cover" />
+                ) : (
+                  <div className="flex size-full items-center justify-center text-primary">
+                    <Icon className="size-10" />
+                  </div>
+                )}
               </div>
-              <h3 className="mt-5 text-lg font-medium">{title}</h3>
+              <h3 className="text-lg font-medium">{title}</h3>
               <p className="mt-2 text-sm text-muted-foreground">{text}</p>
             </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
@@ -206,17 +249,21 @@ export default async function Home() {
         <h2 className="mt-2 max-w-2xl text-3xl font-medium tracking-tight text-balance lg:text-5xl">
           Elige el modelo que mejor se ajuste a tu idea.
         </h2>
-        <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {MODELS.map((m) => (
-            <li key={m.id} className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4">
-              <span>
-                <span className="block font-medium">{m.label}</span>
-                <span className="text-xs text-muted-foreground">{m.provider}</span>
-              </span>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs">{m.kind === "video" ? "Video" : "Imagen"}</span>
-            </li>
-          ))}
-        </ul>
+        {/* Carrusel infinito: la lista va dos veces para que el bucle no tenga saltos */}
+        <div className="mw-marquee-wrap -mx-4 mt-10 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] lg:-mx-8">
+          <ul className="mw-marquee flex w-max gap-4 px-2">
+            {[...MODELS, ...MODELS].map((m, i) => (
+              <li key={i} aria-hidden={i >= MODELS.length} className="flex w-64 shrink-0 items-center gap-4 rounded-3xl bg-card p-4">
+                <Image src={modelIcon(m.id)} alt="" width={64} height={64} className="size-16 rounded-2xl object-cover" />
+                <span className="min-w-0">
+                  <span className="block truncate font-medium">{m.label}</span>
+                  <span className="block text-xs text-muted-foreground">{m.provider}</span>
+                  <span className="mt-1.5 inline-block rounded-full bg-white/10 px-2.5 py-0.5 text-[11px]">{m.kind === "video" ? "Video" : "Imagen"}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </section>
 
       {/* PRECIO */}
@@ -229,13 +276,13 @@ export default async function Home() {
           Pagas un plan mensual que se renueva solo y recibes tokens para crear. Cada generación gasta tokens según el modelo.
           Sin contratos: cancelas cuando quieras.
         </p>
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:max-w-4xl">
+        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {plans.map((p) => (
             <div
               key={p.id}
               className={cn(
                 "flex flex-col rounded-[2rem] p-7 lg:p-9",
-                p.highlighted ? "bg-primary text-primary-foreground" : "border bg-card",
+                p.highlighted ? "mw-animated-gradient text-white shadow-2xl shadow-primary/30" : "bg-card",
               )}
             >
               <p className={cn("text-sm", p.highlighted ? "opacity-80" : "text-muted-foreground")}>{p.name}</p>

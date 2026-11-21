@@ -23,6 +23,9 @@ CREATE TABLE IF NOT EXISTS presets(
   id TEXT PRIMARY KEY, user_id TEXT NOT NULL, name TEXT NOT NULL, free_text TEXT, ref_file TEXT,
   modifier_ids TEXT NOT NULL, created_at INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS idx_presets_user ON presets(user_id, created_at);
+-- Huella (sha256) de cada archivo del usuario: si sube la misma imagen otra vez se reutiliza el archivo ya guardado.
+CREATE TABLE IF NOT EXISTS file_hashes(
+  user_id TEXT NOT NULL, hash TEXT NOT NULL, file TEXT NOT NULL, PRIMARY KEY(user_id, hash));
 CREATE TABLE IF NOT EXISTS hero_images(
   id TEXT PRIMARY KEY, file TEXT NOT NULL, sort INTEGER NOT NULL DEFAULT 0, active INTEGER NOT NULL DEFAULT 1, created_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS plans(
@@ -72,7 +75,7 @@ const MIGRATIONS = [
   // Las cuentas que ya existían se consideran con el tutorial visto; las nuevas se registran con 0.
   "ALTER TABLE users ADD COLUMN onboarded INTEGER NOT NULL DEFAULT 1",
 ];
-const DB_VERSION = 10; // súbelo al agregar migraciones para que el servidor en caliente las aplique
+const DB_VERSION = 11; // súbelo al agregar migraciones para que el servidor en caliente las aplique
 
 const g = globalThis as unknown as { __db?: Client; __dbReady?: Promise<unknown>; __dbVer?: number };
 

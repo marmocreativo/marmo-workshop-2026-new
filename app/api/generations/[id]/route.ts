@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { HttpError, authed, handle } from "@/lib/api";
 import { batch, one, run } from "@/lib/db";
-import { deleteStored } from "@/lib/storage";
+import { releaseFile } from "@/lib/files";
 
 const patchSchema = z.object({
   sourceDeleted: z.boolean().optional(), // borrado suave de la referencia (se puede restaurar)
@@ -27,6 +27,22 @@ export const PATCH = handle(async (req: Request, { params }: { params: Promise<{
   if (!sets.length) throw new HttpError(400, "Nada que actualizar");
   const res = await run(`UPDATE generations SET ${sets.join(",")} WHERE id=? AND user_id=?`, [...args, id, user.id]);
   if (!res.rowsAffected) throw new HttpError(404, "Resultado no encontrado");
+  // Varias generaciones pueden compartir la misma imagen de referencia: su estado se mantiene igual en todas.
+  if (sourceDeleted !== undefined || sourcePublic !== undefined) {
+    const sync: string[] = [];
+    const sargs: number[] = [];
+    if (sourceDeleted !== undefined) {
+      sync.push("source_deleted_at=?");
+      sargs.push(sourceDeleted ? Date.now() : (null as unknown as number));
+      if (sourceDeleted) sync.push("source_public=0");
+    }
+    if (sourcePublic !== undefined) (sync.push("source_public=?"), sargs.push(sourcePublic ? 1 : 0));
+    await run(
+      `UPDATE generations SET ${sync.join(",")} WHERE user_id=? AND source_file IS NOT NULL
+       AND source_file=(SELECT source_file FROM generations WHERE id=?)`,
+      [...sargs, user.id, id],
+    );
+  }
   return Response.json({ ok: true });
 });
 
@@ -44,6 +60,7 @@ export const DELETE = handle(async (_req: Request, { params }: { params: Promise
     { sql: "DELETE FROM generation_modifiers WHERE generation_id=?", args: [id] },
     { sql: "DELETE FROM generations WHERE id=?", args: [id] },
   ]);
-  await Promise.all([g.source_file, g.result_file].filter((f): f is string => !!f).map(deleteStored));
+  // Los archivos se borran solo si ninguna otra generación los usa.
+  for (const f of new Set([g.source_file, g.result_file].filter((f): f is string => !!f))) await releaseFile(f);
   return Response.json({ ok: true });
 });

@@ -8,6 +8,7 @@ import { getModel, MODELS } from "@/lib/models";
 import { cn } from "@/lib/utils";
 import type { Modifier } from "@/lib/types";
 import { CameraDialog } from "./camera-dialog";
+import { ModelSelect } from "./model-select";
 import { CategoryIcon } from "./category-icon";
 import { ModifierEditor } from "./modifier-editor";
 import type { StudioState } from "./use-studio";
@@ -356,8 +357,8 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
               value={s.freeText}
               onChange={(e) => s.setFreeText(e.target.value)}
               maxLength={1000}
-              placeholder="Texto adicional (opcional)…"
-              aria-label="Texto adicional"
+              placeholder="Describe modificaciones extra…"
+              aria-label="Prompt manual"
               className="h-11 w-full rounded-xl bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/50 hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-primary"
             />
             <div className="flex gap-2">
@@ -372,13 +373,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
                   ))
                 )}
               </GhostSelect>
-              <GhostSelect label="Modelo" value={s.model} onChange={s.setModel}>
-                {MODELS.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.label}
-                  </option>
-                ))}
-              </GhostSelect>
+              <ModelSelect value={s.model} onChange={s.setModel} />
             </div>
             <div className="flex items-center gap-2 text-xs text-white/70">
               <span className="flex-1">
@@ -395,12 +390,12 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
                 </Link>
               )}
             </div>
-            <Button data-tour="process" className="h-12 w-full rounded-2xl text-base" disabled={!s.canProcess} onClick={s.process}>
+            <Button data-tour="process" className="h-12 w-full rounded-2xl text-base" disabled={!s.image || !s.hasInput} onClick={s.process}>
               {s.busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
               {!s.canAfford
                   ? "Tokens insuficientes"
-                  : s.image && s.selected.size === 0
-                    ? "Elige al menos un modificador"
+                  : s.image && !s.hasInput
+                    ? "Elige un modificador o escribe un prompt"
                     : s.busy
                       ? `Procesar otra (${s.pending} en proceso)`
                       : "Procesar"}

@@ -54,3 +54,21 @@ export async function confirmAction(text: string, { title = "¿Continuar?", conf
 export function alertBox(title: string, text?: string, icon: "info" | "error" | "success" | "warning" = "info") {
   return Swal.fire({ ...theme, icon, title, text, confirmButtonText: "Entendido" });
 }
+
+/** Aviso de tokens agotados: devuelve "plan", "tokens" o null si lo cierra. */
+export async function noTokensPopup(): Promise<"plan" | "tokens" | null> {
+  const r = await Swal.fire({
+    ...theme,
+    icon: "warning",
+    title: "Te quedaste sin tokens",
+    text: "Para seguir creando puedes subir de plan o comprar tokens extra (no caducan).",
+    showDenyButton: true,
+    showCancelButton: true,
+    confirmButtonText: "Mejorar mi plan",
+    denyButtonText: "Comprar tokens extra",
+    cancelButtonText: "Ahora no",
+    denyButtonColor: "var(--secondary)",
+    reverseButtons: false,
+  });
+  return r.isConfirmed ? "plan" : r.isDenied ? "tokens" : null;
+}

@@ -8,7 +8,7 @@ type Ctx = { params: Promise<{ id: string }> };
 const schema = z.object({
   favorite: z.boolean().optional(),
   isPublic: z.boolean().optional(),
-  text: z.string().trim().min(1).max(500).optional(),
+  text: z.string().trim().min(1).max(2000).optional(),
   categoryId: z.string().optional(),
   keepOriginal: z.boolean().optional(), // editar sin archivar el original (se usa desde el Studio)
 });

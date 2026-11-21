@@ -26,6 +26,8 @@ type Props = {
   appliesOnScan?: boolean;
   /** Al editar, el original queda intacto en la biblioteca (solo se crea uno nuevo). */
   keepOriginal?: boolean;
+  /** Pestaña con la que abre el diálogo (por defecto, escribir). */
+  initialMode?: "write" | "analyze";
 };
 
 export function ModifierEditor({
@@ -37,6 +39,7 @@ export function ModifierEditor({
   onSaved,
   appliesOnScan,
   keepOriginal,
+  initialMode = "write",
 }: Props) {
   const [mode, setMode] = useState<"write" | "analyze">("write");
   const [categoryId, setCategoryId] = useState("");
@@ -70,11 +73,11 @@ export function ModifierEditor({
     originRef.current = null;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     showOrigin(null);
-    setMode("write");
+    setMode(initialMode);
     setSuggestions([]);
     setText(editing?.text ?? "");
     setCategoryId(editing?.category_id ?? defaultCategoryId ?? categories[0]?.id ?? "");
-  }, [open, editing, defaultCategoryId, categories]);
+  }, [open, editing, defaultCategoryId, categories, initialMode]);
 
   // En modo "Analizar imagen", Ctrl/Cmd+V analiza la imagen del portapapeles.
   useEffect(() => {
@@ -214,10 +217,12 @@ export function ModifierEditor({
               value={text}
               onChange={(e) => setText(e.target.value)}
               placeholder="Ej. Luz de neón en tonos magenta y azul"
-              rows={4}
+              rows={6}
+              maxLength={2000}
               className="text-base"
               autoFocus
             />
+            <p className="text-right text-xs text-muted-foreground">{text.length}/2000</p>
             <Button className="h-11 w-full" disabled={busy || !text.trim() || !categoryId} onClick={save}>
               {busy && <Loader2 className="animate-spin" />}
               {editing ? "Guardar como nuevo" : "Guardar modificador"}

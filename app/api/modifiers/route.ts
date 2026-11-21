@@ -32,7 +32,7 @@ const schema = z.object({
     .array(
       z.object({
         categoryId: z.string(),
-        text: z.string().trim().min(1).max(500),
+        text: z.string().trim().min(1).max(2000),
         originFile: z.string().optional(),
       }),
     )
@@ -44,7 +44,7 @@ const schema = z.object({
 export const POST = handle(async (req: Request) => {
   const user = await authed();
   const parsed = schema.safeParse(await req.json());
-  if (!parsed.success) throw new HttpError(400, "Escribe el texto del modificador");
+  if (!parsed.success) throw new HttpError(400, "Escribe el texto del modificador (máximo 2000 caracteres)");
   const created: Modifier[] = [];
   for (const it of parsed.data.items) {
     const cat = await one("SELECT id FROM categories WHERE id=? AND user_id=?", [it.categoryId, user.id]);

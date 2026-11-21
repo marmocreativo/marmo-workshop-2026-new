@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const DIR = path.join(process.cwd(), "storage");
@@ -19,4 +19,12 @@ export async function deleteStored(name: string) {
 export async function readStored(name: string) {
   if (name !== path.basename(name)) throw new Error("bad name");
   return readFile(path.join(DIR, name));
+}
+
+export async function storedExists(name: string) {
+  if (name !== path.basename(name)) return false;
+  return stat(path.join(DIR, name)).then(
+    () => true,
+    () => false,
+  );
 }

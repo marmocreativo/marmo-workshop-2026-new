@@ -164,3 +164,18 @@
 .swal2-toast.mw-swal { border-radius: 9999px !important; padding: 0.6rem 1rem !important; box-shadow: 0 10px 30px rgb(0 0 0 / 0.5); }
 .swal2-toast .swal2-title { font-size: 0.875rem !important; margin: 0 0.5rem !important; }
 .mw-swal-cancel { color: var(--foreground) !important; }
+
+/* Carrusel infinito de modelos (la lista va duplicada: al llegar a -50% reinicia sin salto) */
+@keyframes mw-marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+.mw-marquee { animation: mw-marquee 40s linear infinite; }
+.mw-marquee-wrap:hover .mw-marquee { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) { .mw-marquee { animation: none; } }
+
+/* Degradado en movimiento para el plan destacado */
+@keyframes mw-gradient { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+.mw-animated-gradient {
+  background-image: linear-gradient(120deg, var(--primary), oklch(0.72 0.19 45), oklch(0.6 0.24 10), var(--primary));
+  background-size: 300% 300%;
+  animation: mw-gradient 8s ease infinite;
+}
+@media (prefers-reduced-motion: reduce) { .mw-animated-gradient { animation: none; } }

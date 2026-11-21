@@ -25,7 +25,7 @@ export function PresetCards({
   if (presets.length === 0) {
     return (
       <p className="py-4 text-center text-sm text-muted-foreground">
-        Aún no tienes presets propios. Elige modificadores y texto extra, y guárdalos para reutilizarlos.
+        Aún no tienes presets propios. Elige modificadores y prompt manual, y guárdalos para reutilizarlos.
       </p>
     );
   }
@@ -153,7 +153,7 @@ export function PresetSaveDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Guardar preset</DialogTitle>
-          <DialogDescription>Se guardan los modificadores elegidos y el texto extra.</DialogDescription>
+          <DialogDescription>Se guardan los modificadores elegidos y el prompt manual.</DialogDescription>
         </DialogHeader>
         <Input
           value={name}

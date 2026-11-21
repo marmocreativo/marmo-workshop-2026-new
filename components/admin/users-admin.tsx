@@ -22,7 +22,7 @@ type AdminUser = {
   created_at: number;
 };
 type Detail = {
-  user: AdminUser & { sub_period_end: number | null; cancel_at_period_end: number };
+  user: AdminUser & { sub_period_end: number | null; cancel_at_period_end: number; onboarded: number };
   ledger: LedgerEntry[];
   payments: Payment[];
 };
@@ -56,6 +56,22 @@ export function UsersAdmin() {
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">Usuarios</h1>
         <p className="text-sm text-muted-foreground">Saldo de tokens, cargas manuales y reembolsos.</p>
+        <Button
+          variant="outline"
+          size="sm"
+          className="mt-3"
+          onClick={async () => {
+            if (!(await confirmAction("Todos los usuarios verán el tutorial la próxima vez que abran el Studio.", { title: "¿Reiniciar el tutorial para todos?", confirmText: "Reiniciar" }))) return;
+            try {
+              const r = await api<{ users: number }>("/api/admin/onboarding", { method: "POST", body: jsonBody({ all: true }) });
+              toast.success(`Tutorial reiniciado para ${r.users} usuarios`);
+            } catch (e) {
+              toast.error((e as Error).message);
+            }
+          }}
+        >
+          <RotateCcw /> Reiniciar tutorial para todos
+        </Button>
       </header>
 
       <form
@@ -187,6 +203,34 @@ function UserDialog({ id, onClose, onChanged }: { id: string | null; onClose: ()
               <p className="text-xs text-muted-foreground">Saldo actual</p>
               <p className="text-3xl font-semibold">{formatTokens(d.user.tokens)} <span className="text-base font-normal text-muted-foreground">tokens</span></p>
             </div>
+
+            <section className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border p-4">
+              <div>
+                <h3 className="text-sm font-semibold">Tutorial</h3>
+                <p className="text-xs text-muted-foreground">
+                  {d.user.onboarded ? "Ya lo vio o lo saltó." : "Pendiente: se le mostrará al abrir el Studio."}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={!d.user.onboarded || busy === "tour"}
+                onClick={async () => {
+                  setBusy("tour");
+                  try {
+                    await api("/api/admin/onboarding", { method: "POST", body: jsonBody({ userId: d.user.id }) });
+                    toast.success("Tutorial reiniciado");
+                    await load(d.user.id);
+                  } catch (e) {
+                    toast.error((e as Error).message);
+                  } finally {
+                    setBusy(null);
+                  }
+                }}
+              >
+                <RotateCcw /> Reiniciar tutorial
+              </Button>
+            </section>
 
             <section className="space-y-3 rounded-2xl border p-4">
               <h3 className="text-sm font-semibold">Carga manual de tokens</h3>

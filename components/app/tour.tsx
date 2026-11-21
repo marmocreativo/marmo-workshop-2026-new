@@ -35,7 +35,7 @@ const STEPS: Record<Exclude<TourStep, "result">, Info> = {
   edit: {
     n: 5,
     title: "¿No quedó al 100 %?",
-    text: "Ajusta lo que quieras: cambia, agrega o quita modificadores, escribe instrucciones en el texto adicional, o prueba otro modelo y otra proporción. Luego vuelve a procesar.",
+    text: "Ajusta lo que quieras: cambia, agrega o quita modificadores, escribe en el prompt manual lo que quieras cambiar, o prueba otro modelo y otra proporción. Luego vuelve a procesar.",
     target: "controls",
     action: "next",
   },
@@ -68,60 +68,70 @@ export function TourOverlay({ s }: { s: StudioState }) {
       setHidden(!!document.querySelector('[role="dialog"]')); // con un drawer o popup abierto se oculta
       setVp((o) => (o.w === window.innerWidth && o.h === window.innerHeight ? o : { w: window.innerWidth, h: window.innerHeight }));
     };
-    tick();
+    const first = setTimeout(tick, 0);
     const id = setInterval(tick, 250);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, [info]);
 
   if (!info || hidden) return null;
 
   const pad = 6;
-  const cardW = Math.min(340, vp.w - 24);
+  const cardW = Math.min(400, vp.w - 24);
   let cardStyle: React.CSSProperties = { left: Math.max(12, (vp.w - cardW) / 2), top: Math.max(12, vp.h / 2 - 120), width: cardW };
   if (rect) {
     const below = rect.top + rect.height / 2 < vp.h / 2;
     const left = Math.min(Math.max(12, rect.left + rect.width / 2 - cardW / 2), vp.w - cardW - 12);
     cardStyle = below
-      ? { left, top: Math.min(rect.top + rect.height + 16, vp.h - 200), width: cardW }
+      ? { left, top: Math.min(rect.top + rect.height + 16, vp.h - 260), width: cardW }
       : { left, bottom: Math.max(12, vp.h - rect.top + 16), width: cardW };
   }
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[60]">
       {rect ? (
-        <div
-          className="absolute rounded-2xl ring-2 ring-primary transition-all duration-200"
-          style={{
-            top: rect.top - pad,
-            left: rect.left - pad,
-            width: rect.width + pad * 2,
-            height: rect.height + pad * 2,
-            boxShadow: "0 0 0 9999px rgba(0,0,0,.6)",
-          }}
-        >
-          <span className="absolute inset-0 animate-ping rounded-2xl ring-2 ring-primary/70" />
-        </div>
+        <>
+          {/* Cuatro paneles con desenfoque rodean el recuadro: lo resaltado queda nítido y el resto de la interfaz, borrosa. */}
+          {[
+            { top: 0, left: 0, width: "100%", height: Math.max(0, rect.top - pad) },
+            { top: rect.top + rect.height + pad, left: 0, width: "100%", height: Math.max(0, vp.h - (rect.top + rect.height + pad)) },
+            { top: rect.top - pad, left: 0, width: Math.max(0, rect.left - pad), height: rect.height + pad * 2 },
+            { top: rect.top - pad, left: rect.left + rect.width + pad, width: Math.max(0, vp.w - (rect.left + rect.width + pad)), height: rect.height + pad * 2 },
+          ].map((st, i) => (
+            <div key={i} className="absolute bg-black/55 backdrop-blur-[6px] transition-all duration-200" style={st} />
+          ))}
+          <div
+            className="absolute rounded-2xl ring-[3px] ring-primary transition-all duration-200"
+            style={{ top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 }}
+          >
+            <span className="absolute inset-0 animate-ping rounded-2xl ring-2 ring-primary/70" />
+          </div>
+        </>
       ) : (
-        <div className="absolute inset-0 bg-black/60" />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-[6px]" />
       )}
-      <div
-        className="pointer-events-auto absolute rounded-2xl border bg-popover p-4 text-popover-foreground shadow-2xl"
-        style={cardStyle}
-        role="status"
-      >
-        <p className="text-[11px] font-semibold tracking-wide text-primary uppercase">Paso {info.n} de 6</p>
-        <h3 className="mt-1 text-base font-semibold">{info.title}</h3>
-        <p className="mt-1.5 text-sm text-muted-foreground">{info.text}</p>
+      <div className="pointer-events-auto absolute" style={cardStyle} role="status">
+       {/* key: la tarjeta vuelve a animarse en cada paso */}
+       <div
+        key={step}
+        className="animate-in fade-in-0 zoom-in-90 slide-in-from-bottom-6 rounded-3xl border-2 border-primary bg-popover p-5 text-popover-foreground shadow-[0_20px_60px_rgba(0,0,0,.5)] duration-500"
+       >
+        <p className="text-xs font-bold tracking-wide text-primary uppercase">Paso {info.n} de 6</p>
+        <h3 className="mt-1.5 text-2xl leading-tight font-semibold">{info.title}</h3>
+        <p className="mt-2 text-base leading-relaxed text-foreground/85">{info.text}</p>
         <div className="mt-3 flex items-center justify-between gap-2">
-          <button type="button" onClick={s.tour.finish} className="text-xs text-muted-foreground underline-offset-2 hover:underline">
+          <button type="button" onClick={s.tour.finish} className="text-sm text-muted-foreground underline-offset-2 hover:underline">
             Saltar tutorial
           </button>
           {info.action && (
-            <Button size="sm" onClick={info.action === "next" ? s.tour.next : s.tour.finish}>
+            <Button className="h-10 px-5 text-base" onClick={info.action === "next" ? s.tour.next : s.tour.finish}>
               {info.action === "next" ? "Siguiente" : "Empezar a crear"}
             </Button>
           )}
         </div>
+       </div>
       </div>
     </div>
   );

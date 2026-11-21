@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { toast } from "@/lib/alerts";
+import { noTokensPopup, toast } from "@/lib/alerts";
 import { api, fileUrl, jsonBody, resizeImage } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { MODELS, getModel, resolveRatio } from "@/lib/models";
@@ -30,11 +30,13 @@ export function useStudio(initialRef?: string, onboarding = false) {
   const ratio = resolveRatio(getModel(model) ?? MODELS[0], ratioChoice);
   const router = useRouter();
   const [billing, setBilling] = useState<BillingMe | null>(null);
+  const warnedRef = useRef(false);
   const balRef = useRef(0); // saldo más reciente, para descontar varias peticiones seguidas sin esperar el render
   const loadBilling = useCallback(async () => {
     const b = await api<BillingMe>("/api/billing/me");
     balRef.current = b.account.tokens;
     setBilling(b);
+    return b;
   }, []);
   useEffect(() => {
     loadBilling().catch(() => {});
@@ -121,6 +123,8 @@ export function useStudio(initialRef?: string, onboarding = false) {
 
   const clearSelected = useCallback(() => setSelected(new Set()), []);
 
+  // Basta con un modificador o con texto en el prompt manual.
+  const hasInput = selected.size > 0 || freeText.trim().length > 0;
   const chosen = useMemo(() => library.modifiers.filter((m) => selected.has(m.id)), [library.modifiers, selected]);
 
   async function pasteFromClipboard() {
@@ -153,9 +157,16 @@ export function useStudio(initialRef?: string, onboarding = false) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialRef]);
 
+  // Avisa que se acabaron los tokens y lleva a Cuenta (planes o recargas).
+  async function outOfTokens() {
+    const go = await noTokensPopup();
+    if (go) router.push(go === "plan" ? "/cuenta#planes" : "/cuenta#tokens");
+  }
+
   async function process() {
     if (!image) return toast.error("Primero agrega una foto");
-    if (selected.size === 0) return toast.error("Elige al menos un modificador");
+    if (!hasInput) return toast.error("Elige un modificador o escribe el prompt manual");
+    if (!canAfford) return outOfTokens();
     setPending((n) => n + 1);
     // El servidor cobra al recibir la petición: se refleja de inmediato y luego se reconcilia con el saldo real.
     if (billing && !billing.account.bypass && tokenCost) emitBalance(Math.max(0, balRef.current - tokenCost));
@@ -175,11 +186,20 @@ export function useStudio(initialRef?: string, onboarding = false) {
         setOpenId(out.id);
       } else setFresh((f) => new Set(f).add(out.id)); // sin abrir el modal: la galería pulsa para avisar
     } catch (e) {
-      toast.error((e as Error).message);
+      const msg = (e as Error).message;
+      if (/Tokens insuficientes/i.test(msg)) outOfTokens();
+      else toast.error(msg);
       loadGens().catch(() => {});
     } finally {
       setPending((n) => Math.max(0, n - 1));
-      loadBilling().catch(() => {});
+      loadBilling()
+        .then((b) => {
+          // Si tras cobrar ya no alcanza para otra generación, se avisa una sola vez.
+          const low = !b.account.bypass && b.account.tokens < (tokenCost ?? 1);
+          if (low && !warnedRef.current) outOfTokens();
+          warnedRef.current = low;
+        })
+        .catch(() => {});
       requestBalanceRefresh(); // saldo real (por si hubo devolución)
       router.refresh();
     }
@@ -197,15 +217,16 @@ export function useStudio(initialRef?: string, onboarding = false) {
 
   async function setVisibility(g: Generation, patch: { isPublic?: boolean; sourcePublic?: boolean }) {
     setGens((all) =>
-      all.map((x) =>
-        x.id === g.id
+      all.map((x) => {
+        const sameSource = !!g.source_file && x.source_file === g.source_file;
+        return x.id === g.id || sameSource
           ? {
               ...x,
-              is_public: patch.isPublic === undefined ? x.is_public : +patch.isPublic,
+              is_public: x.id === g.id && patch.isPublic !== undefined ? +patch.isPublic : x.is_public,
               source_public: patch.sourcePublic === undefined ? x.source_public : +patch.sourcePublic,
             }
-          : x,
-      ),
+          : x;
+      }),
     );
     try {
       await api(`/api/generations/${g.id}`, { method: "PATCH", body: jsonBody(patch) });
@@ -218,7 +239,10 @@ export function useStudio(initialRef?: string, onboarding = false) {
   // Borrado suave de la imagen de referencia: la oculta de la biblioteca o la restaura.
   async function setSourceDeleted(id: string, deleted: boolean) {
     const at = deleted ? Date.now() : null;
-    setGens((all) => all.map((g) => (g.id === id ? { ...g, source_deleted_at: at, source_public: deleted ? 0 : g.source_public } : g)));
+    const file = gens.find((g) => g.id === id)?.source_file;
+    setGens((all) =>
+      all.map((g) => (g.id === id || (!!file && g.source_file === file) ? { ...g, source_deleted_at: at, source_public: deleted ? 0 : g.source_public } : g)),
+    );
     try {
       await api(`/api/generations/${id}`, { method: "PATCH", body: jsonBody({ sourceDeleted: deleted }) });
       toast.success(deleted ? "Imagen quitada de la biblioteca" : "Imagen restaurada");
@@ -326,7 +350,7 @@ export function useStudio(initialRef?: string, onboarding = false) {
         ? "photo"
         : pending > 0
           ? "wait"
-          : selected.size === 0
+          : !hasInput
             ? "preset"
             : "process";
   const finishTour = () => {
@@ -376,7 +400,8 @@ export function useStudio(initialRef?: string, onboarding = false) {
     savePresetFromGeneration,
     deletePreset,
     setPresetPublic,
-    canProcess: !!image && selected.size > 0 && canAfford,
+    hasInput,
+    canProcess: !!image && hasInput && canAfford,
     pasteFromClipboard,
     useStoredFile,
   };

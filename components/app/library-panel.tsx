@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Bookmark, Plus, Trash2, Undo2, X } from "lucide-react";
+import { Bookmark, PenLine, ScanLine, Trash2, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api, fileUrl } from "@/lib/client";
 import type { CommunityPreset } from "@/lib/types";
@@ -22,6 +22,11 @@ const TABS: [Tab, string][] = [
 export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClose?: () => void; className?: string }) {
   const [tab, setTab] = useState<Tab>("presets");
   const [editorOpen, setEditorOpen] = useState(false);
+  const [editorMode, setEditorMode] = useState<"write" | "analyze">("write");
+  const openEditor = (m: "write" | "analyze") => {
+    setEditorMode(m);
+    setEditorOpen(true);
+  };
   const [saveOpen, setSaveOpen] = useState(false);
   const [trash, setTrash] = useState(false);
   const [community, setCommunity] = useState<CommunityPreset[]>([]);
@@ -35,31 +40,26 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
 
   const done = s.gens.filter((g) => g.result_file);
   // Imágenes ya usadas. Las referencias tienen borrado suave (papelera).
-  const used = trash
-    ? s.gens
-        .filter((g) => g.source_file && g.source_deleted_at)
-        .map((g) => ({ id: g.id, file: g.source_file!, kind: "Referencia", isRef: true }))
-    : [
-        ...s.gens
-          .filter((g) => g.source_file && !g.source_deleted_at)
-          .map((g) => ({ id: g.id, file: g.source_file!, kind: "Referencia", isRef: true })),
-        ...done
-          .filter((g) => g.kind === "image")
-          .map((g) => ({ id: g.id, file: g.result_file!, kind: "Resultado", isRef: false })),
-      ];
+  // Cada archivo aparece una sola vez (varias generaciones pueden compartir la misma referencia).
+  const refs = new Map<string, { id: string; file: string; kind: string; isRef: boolean; alive: boolean }>();
+  for (const g of s.gens) {
+    if (!g.source_file) continue;
+    const alive = !g.source_deleted_at;
+    const prev = refs.get(g.source_file);
+    if (!prev) refs.set(g.source_file, { id: g.id, file: g.source_file, kind: "Referencia", isRef: true, alive });
+    else if (alive && !prev.alive) refs.set(g.source_file, { ...prev, id: g.id, alive });
+  }
+  const results = new Map<string, { id: string; file: string; kind: string; isRef: boolean; alive: boolean }>();
+  for (const g of done) if (g.kind === "image" && !refs.has(g.result_file!) && !results.has(g.result_file!)) results.set(g.result_file!, { id: g.id, file: g.result_file!, kind: "Resultado", isRef: false, alive: true });
+  const used = trash ? [...refs.values()].filter((r) => !r.alive) : [...[...refs.values()].filter((r) => r.alive), ...results.values()];
   const shown = used.slice(0, 90);
-  const trashCount = s.gens.filter((g) => g.source_file && g.source_deleted_at).length;
+  const trashCount = [...refs.values()].filter((r) => !r.alive).length;
   const canSavePreset = s.selected.size > 0 || s.freeText.trim().length > 0;
 
   return (
     <div className={cn("flex min-h-0 flex-1 flex-col gap-3", className)}>
       <header className="flex h-8 items-center justify-between">
         <h2 className="text-lg font-semibold tracking-tight">Biblioteca</h2>
-        {tab === "mods" && (
-          <Button variant="outline" size="sm" onClick={() => setEditorOpen(true)}>
-            <Plus /> Nuevo
-          </Button>
-        )}
         {tab === "presets" && (
           <Button variant="outline" size="sm" disabled={!canSavePreset} onClick={() => setSaveOpen(true)}>
             <Bookmark /> Guardar actual
@@ -81,7 +81,28 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
       </div>
 
       {tab === "mods" && (
-        <ModifierBrowser focused categories={s.categories} modifiers={s.modifiers} selected={s.selected} onToggle={s.toggle} />
+        <>
+          {/* La lista termina antes del fondo: abajo quedan fijos los accesos para crear modificadores. */}
+          <ModifierBrowser focused categories={s.categories} modifiers={s.modifiers} selected={s.selected} onToggle={s.toggle} />
+          <div className="grid shrink-0 grid-cols-2 gap-2 border-t pt-3">
+            <button
+              type="button"
+              onClick={() => openEditor("write")}
+              className="flex h-24 flex-col items-center justify-center gap-2 rounded-2xl bg-muted px-2 text-center text-sm leading-tight font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              <PenLine className="size-6" />
+              Escribir un nuevo modificador
+            </button>
+            <button
+              type="button"
+              onClick={() => openEditor("analyze")}
+              className="flex h-24 flex-col items-center justify-center gap-2 rounded-2xl bg-muted px-2 text-center text-sm leading-tight font-medium transition-colors hover:bg-primary hover:text-primary-foreground"
+            >
+              <ScanLine className="size-6" />
+              Analizar imagen y obtén modificadores
+            </button>
+          </div>
+        </>
       )}
 
       {tab === "presets" && (
@@ -175,7 +196,7 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
         </>
       )}
 
-      <ModifierEditor open={editorOpen} onOpenChange={setEditorOpen} categories={s.categories} onSaved={s.applyCreated} appliesOnScan />
+      <ModifierEditor open={editorOpen} onOpenChange={setEditorOpen} initialMode={editorMode} categories={s.categories} onSaved={s.applyCreated} appliesOnScan />
       <PresetSaveDialog open={saveOpen} onOpenChange={setSaveOpen} hasImage={!!s.image} onSave={s.savePreset} />
     </div>
   );

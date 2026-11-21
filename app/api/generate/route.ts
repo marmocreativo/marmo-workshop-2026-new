@@ -5,7 +5,7 @@ import { getPricing, refundUsage, spendTokens } from "@/lib/billing";
 import { batch, query, run, uid } from "@/lib/db";
 import { extractResultUrl, getModel, resolveRatio } from "@/lib/models";
 import { buildPrompt } from "@/lib/prompt";
-import { saveFile } from "@/lib/storage";
+import { saveDeduped } from "@/lib/files";
 import { tokensFor } from "@/lib/tokens";
 
 export const maxDuration = 300;
@@ -35,6 +35,8 @@ export const POST = handle(async (req: Request) => {
       )
     : [];
 
+  if (!mods.length && !freeText.trim()) throw new HttpError(400, "Elige un modificador o escribe el prompt manual");
+
   const ratio = resolveRatio(model, String(form.get("aspectRatio") ?? "auto"));
   const cost = model.cost(ratio).usd;
   const prompt = buildPrompt(mods, freeText, model.kind);
@@ -54,7 +56,8 @@ export const POST = handle(async (req: Request) => {
   let sourceBuf: Buffer;
   try {
     sourceBuf = Buffer.from(await image.arrayBuffer());
-    const sourceFile = await saveFile(user.id, sourceBuf, image.type === "image/png" ? "png" : "jpg");
+    // Misma imagen que ya usó antes: se reutiliza el archivo (no se duplica en disco ni en la biblioteca).
+    const sourceFile = await saveDeduped(user.id, sourceBuf, image.type === "image/png" ? "png" : "jpg");
     await run(
       `INSERT INTO generations(id,user_id,model,kind,free_text,prompt,source_file,aspect_ratio,cost_usd,tokens_spent,status,created_at)
        VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`,
@@ -74,7 +77,7 @@ export const POST = handle(async (req: Request) => {
     const res = await fetch(resultUrl);
     if (!res.ok) throw new Error("No se pudo descargar el resultado");
     const ext = model.kind === "video" ? "mp4" : (res.headers.get("content-type")?.includes("png") ? "png" : "jpg");
-    const resultFile = await saveFile(user.id, Buffer.from(await res.arrayBuffer()), ext);
+    const resultFile = await saveDeduped(user.id, Buffer.from(await res.arrayBuffer()), ext);
 
     await batch([
       { sql: "UPDATE generations SET status='done', result_file=? WHERE id=?", args: [resultFile, id] },

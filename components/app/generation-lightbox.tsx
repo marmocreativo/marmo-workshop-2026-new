@@ -19,7 +19,7 @@ type Props = {
   onDelete: (id: string) => Promise<void> | void;
   onReuse?: (g: Generation, parts: ReusePart[]) => void;
   onModifierClick?: (modifierId: string) => void;
-  /** Guarda los modificadores y el texto extra del resultado como preset (su imagen es la portada). */
+  /** Guarda los modificadores y el prompt manual del resultado como preset (su imagen es la portada). */
   onSavePreset?: (g: Generation, name: string) => Promise<void>;
   /** Cambia la visibilidad pública del resultado o de su referencia. */
   onVisibility?: (g: Generation, patch: { isPublic?: boolean; sourcePublic?: boolean }) => void;

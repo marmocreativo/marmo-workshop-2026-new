@@ -71,7 +71,7 @@ export const MODELS: ModelDef[] = [
     id: "gpt-image",
     label: "GPT Image",
     provider: "OpenAI",
-    endpoint: "fal-ai/gpt-image-1/edit-image",
+    endpoint: "fal-ai/gpt-image-1.5/edit",
     kind: "image",
     ratios: Object.keys(GPT_SIZES),
     input: (prompt, url, ratio) => ({
@@ -81,7 +81,7 @@ export const MODELS: ModelDef[] = [
       image_size: GPT_SIZES[ratio] ?? "auto",
     }),
     // Calidad por defecto del modelo: se muestra el tope (alta).
-    cost: (ratio) => ({ usd: ratio === "1:1" ? 0.167 : 0.25, upTo: true }),
+    cost: (ratio) => ({ usd: ratio === "1:1" ? 0.133 : 0.2, upTo: true }),
   },
   {
     id: "grok",
@@ -123,3 +123,14 @@ export function extractResultUrl(data: unknown): string | null {
   };
   return d?.images?.[0]?.url ?? d?.image?.url ?? d?.video?.url ?? null;
 }
+
+// Icono (public/icons) de cada modelo.
+const ICONS: Record<string, string> = {
+  "nano-banana": "bannana",
+  "nano-banana-pro": "bannana",
+  seedream: "seedream",
+  "gpt-image": "gpt",
+  grok: "grok",
+  seedance: "seedance",
+};
+export const modelIcon = (id: string) => `/icons/${ICONS[id] ?? "bannana"}.webp`;

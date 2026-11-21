@@ -15,8 +15,9 @@ export const GET = handle(async (_req: Request, { params }: { params: Promise<{ 
     sub_period_end: number | null;
     cancel_at_period_end: number;
     created_at: number;
+    onboarded: number;
   }>(
-    "SELECT id,email,role,tokens,plan_id,sub_status,sub_period_end,cancel_at_period_end,created_at FROM users WHERE id=?",
+    "SELECT id,email,role,tokens,plan_id,sub_status,sub_period_end,cancel_at_period_end,created_at,onboarded FROM users WHERE id=?",
     [id],
   );
   if (!user) throw new HttpError(404, "Usuario no encontrado");
