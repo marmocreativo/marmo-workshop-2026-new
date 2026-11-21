@@ -74,8 +74,10 @@ const MIGRATIONS = [
   "ALTER TABLE presets ADD COLUMN is_public INTEGER NOT NULL DEFAULT 0",
   // Las cuentas que ya existían se consideran con el tutorial visto; las nuevas se registran con 0.
   "ALTER TABLE users ADD COLUMN onboarded INTEGER NOT NULL DEFAULT 1",
+  "ALTER TABLE users ADD COLUMN google_sub TEXT",
+  "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google ON users(google_sub)",
 ];
-const DB_VERSION = 11; // súbelo al agregar migraciones para que el servidor en caliente las aplique
+const DB_VERSION = 12; // súbelo al agregar migraciones para que el servidor en caliente las aplique
 
 const g = globalThis as unknown as { __db?: Client; __dbReady?: Promise<unknown>; __dbVer?: number };
 

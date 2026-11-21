@@ -18,7 +18,7 @@ type GenerateResult = { id: string; resultFile: string; kind: "image" | "video" 
 // Estado y acciones del Studio, compartidos entre la vista móvil y la de escritorio.
 export type TourStep = "photo" | "preset" | "process" | "wait" | "result" | "edit" | "final";
 
-export function useStudio(initialRef?: string, onboarding = false) {
+export function useStudio(initialRef?: string, onboarding = false, initialPreset?: string) {
   const library = useLibrary();
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -156,6 +156,18 @@ export function useStudio(initialRef?: string, onboarding = false) {
     if (initialRef) useStoredFile(initialRef);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialRef]);
+
+  // Llegar desde la Biblioteca con ?preset=id aplica ese preset en cuanto carga la biblioteca (una sola vez).
+  const presetDone = useRef(false);
+  useEffect(() => {
+    if (!initialPreset || presetDone.current || library.loading) return;
+    presetDone.current = true;
+    const p = library.presets.find((x) => x.id === initialPreset);
+    if (p) applyPreset(p);
+    else toast.error("No encontré ese preset");
+    router.replace("/studio");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialPreset, library.loading]);
 
   // Avisa que se acabaron los tokens y lleva a Cuenta (planes o recargas).
   async function outOfTokens() {

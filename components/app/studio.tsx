@@ -21,8 +21,8 @@ function useIsDesktop() {
 }
 
 // Móvil: flujo vertical. Escritorio (≥1024px): tres columnas (biblioteca · modelo · galería).
-export function Studio({ initialRef, onboarding }: { initialRef?: string; onboarding?: boolean }) {
-  const s = useStudio(initialRef, onboarding);
+export function Studio({ initialRef, initialPreset, onboarding }: { initialRef?: string; initialPreset?: string; onboarding?: boolean }) {
+  const s = useStudio(initialRef, onboarding, initialPreset);
   const isDesktop = useIsDesktop();
   return (
     <>
