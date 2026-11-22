@@ -21,9 +21,11 @@ type Props = {
   defaultCategoryId?: string;
   editing?: Modifier | null;
   /** Recibe los modificadores creados al guardar el análisis de una imagen. */
-  onSaved: (created?: Modifier[]) => void | Promise<void>;
+  onSaved: (created?: Modifier[], opts?: { replace?: boolean }) => void | Promise<void>;
   /** Si el contexto aplica de inmediato lo guardado (p. ej. el Studio), el aviso lo indica. */
   appliesOnScan?: boolean;
+  /** Modificadores ya elegidos en el Studio: si hay, al aplicar un análisis se pregunta si agregar o reemplazar. */
+  selectedCount?: number;
   /** Al editar, el original queda intacto en la biblioteca (solo se crea uno nuevo). */
   keepOriginal?: boolean;
   /** Pestaña con la que abre el diálogo (por defecto, escribir). */
@@ -38,6 +40,7 @@ export function ModifierEditor({
   editing,
   onSaved,
   appliesOnScan,
+  selectedCount = 0,
   keepOriginal,
   initialMode = "write",
 }: Props) {
@@ -50,6 +53,7 @@ export function ModifierEditor({
   const originRef = useRef<File | null>(null);
   const [analysisTokens, setAnalysisTokens] = useState<number | null>(null);
   const [originUrl, setOriginUrl] = useState<string | null>(null);
+  const [applyMode, setApplyMode] = useState<"add" | "replace">("add");
 
   // Vista previa de la imagen que se está analizando.
   function showOrigin(file: File | null) {
@@ -75,6 +79,7 @@ export function ModifierEditor({
     showOrigin(null);
     setMode(initialMode);
     setSuggestions([]);
+    setApplyMode("add");
     setText(editing?.text ?? "");
     setCategoryId(editing?.category_id ?? defaultCategoryId ?? categories[0]?.id ?? "");
   }, [open, editing, defaultCategoryId, categories, initialMode]);
@@ -164,6 +169,7 @@ export function ModifierEditor({
         form.set("image", originRef.current);
         originFile = (await api<{ originFile: string }>("/api/modifiers/origin", { method: "POST", body: form })).originFile;
       }
+      const replace = appliesOnScan && selectedCount > 0 && applyMode === "replace";
       const items = selected.map(({ categoryId, text }) => ({ categoryId, text, originFile }));
       const { modifiers: created } = await api<{ modifiers: Modifier[] }>("/api/modifiers", {
         method: "POST",
@@ -171,9 +177,11 @@ export function ModifierEditor({
       });
       const many = items.length > 1;
       toast.success(
-        `${items.length} modificador${many ? "es" : ""} guardado${many ? "s" : ""}${appliesOnScan ? ` y aplicado${many ? "s" : ""} a tu foto` : ""}`,
+        `${items.length} modificador${many ? "es" : ""} guardado${many ? "s" : ""}${
+          appliesOnScan ? (replace ? ` y aplicado${many ? "s" : ""} en lugar de los anteriores` : ` y agregado${many ? "s" : ""} a tu foto`) : ""
+        }`,
       );
-      await onSaved(created);
+      await onSaved(created, { replace });
       onOpenChange(false);
     } catch (e) {
       toast.error((e as Error).message);
@@ -300,6 +308,27 @@ export function ModifierEditor({
                     </li>
                   ))}
                 </ul>
+                {appliesOnScan && selectedCount > 0 && (
+                  <div role="radiogroup" aria-label="Qué hacer con los modificadores actuales" className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 text-sm font-medium">
+                    {(
+                      [
+                        ["add", `Agregar a los ${selectedCount} actuales`],
+                        ["replace", "Reemplazar los actuales"],
+                      ] as const
+                    ).map(([v, label]) => (
+                      <button
+                        key={v}
+                        type="button"
+                        role="radio"
+                        aria-checked={applyMode === v}
+                        onClick={() => setApplyMode(v)}
+                        className={cn("min-h-9 rounded-md px-2 py-1 leading-tight", applyMode === v ? "bg-background shadow-sm" : "text-muted-foreground")}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <Button className="h-11 w-full" disabled={busy || !suggestions.some((s) => s.selected)} onClick={saveSuggestions}>
                   <Sparkles />
                   Guardar {suggestions.filter((s) => s.selected).length} seleccionados

@@ -114,9 +114,12 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
 
   // Tras guardar modificadores nuevos (p. ej. del análisis de una imagen), los recarga y los aplica a la foto.
   const applyCreated = useCallback(
-    async (created?: { id: string }[]) => {
+    async (created?: { id: string }[], opts?: { replace?: boolean }) => {
       await library.refresh();
-      if (created?.length) setSelected((s) => new Set([...s, ...created.map((m) => m.id)]));
+      if (!created?.length) return;
+      // replace: los nuevos sustituyen a los modificadores elegidos; si no, se suman.
+      if (opts?.replace) setSelected(new Set(created.map((m) => m.id)));
+      else setSelected((s) => new Set([...s, ...created.map((m) => m.id)]));
     },
     [library],
   );

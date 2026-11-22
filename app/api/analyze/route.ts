@@ -8,6 +8,19 @@ import type { Category } from "@/lib/types";
 
 export const maxDuration = 60;
 
+// Registro (tono) de redacción por categoría. Las categorías que no aparecen aquí usan un lenguaje visual neutro.
+const CINE =
+  "Redáctalo con el lenguaje técnico de un director de fotografía / cineasta profesional: vocabulario de set y de cámara (key light, fill, contraluz, ratio de contraste, temperatura de color en kelvin, dirección y calidad de la luz, ángulo y tipo de plano, distancia focal, apertura, profundidad de campo, bokeh, anamórfico, grano, gradación de color, LUT, contraste y curva tonal).";
+const MODA =
+  "Redáctalo con el lenguaje de un editor de moda editorial: nombra siluetas, cortes, telas y texturas, estampados, paleta de color, capas y styling, y la estética de la prenda (p. ej. sastrería oversize, minimalismo, quiet luxury, streetwear), como en un styling de revista.";
+const TONES: Record<string, string> = {
+  iluminacion: CINE,
+  encuadre: CINE,
+  "efectos-de-lente": CINE,
+  postproduccion: CINE,
+  outfit: MODA,
+};
+
 const outSchema = z.array(z.object({ category: z.string(), text: z.string() }));
 
 // Analiza una imagen con Gemini y devuelve modificadores sugeridos por categoría.
@@ -40,6 +53,10 @@ export const POST = handle(async (req: Request) => {
     user.id,
   ]);
   const catList = categories.map((c) => `- ${c.slug}: ${c.name}`).join("\n");
+  const toneList = categories
+    .filter((c) => TONES[c.slug])
+    .map((c) => `- ${c.slug}: ${TONES[c.slug]}`)
+    .join("\n");
 
   const prompt = `Analiza esta fotografía y describe por separado sus elementos visuales como modificadores reutilizables para generar otras imágenes.
 Categorías disponibles (usa exactamente el slug):
@@ -48,9 +65,10 @@ ${catList}
 Reglas:
 - Devuelve un arreglo JSON de objetos {"category": "<slug>", "text": "<descripción>"}.
 - Una descripción por categoría que aplique a la imagen; omite las que no se vean.
-- Cada texto en español, concreto y visual (30 palabras máximo), usable como instrucción de edición.
+- Cada texto en español, concreto y visual (40 palabras máximo), usable como instrucción de edición. Usa terminología profesional, no descripciones genéricas.
 - Describe ropa, cabello, accesorios, iluminación, pose, encuadre, lente, estilo y postproducción.
-- NO describas la identidad, nombre ni rasgos faciales de las personas.`;
+- NO describas la identidad, nombre ni rasgos faciales de las personas.
+${toneList ? `\nRegistro de redacción por categoría (cada una tiene su propio tono; en las demás usa un lenguaje visual claro y concreto):\n${toneList}` : ""}`;
 
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   const res = await ai.models.generateContent({
