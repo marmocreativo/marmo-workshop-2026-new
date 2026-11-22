@@ -80,13 +80,36 @@ export function TourOverlay({ s }: { s: StudioState }) {
 
   const pad = 6;
   const cardW = Math.min(400, vp.w - 24);
-  let cardStyle: React.CSSProperties = { left: Math.max(12, (vp.w - cardW) / 2), top: Math.max(12, vp.h / 2 - 120), width: cardW };
+  // La tarjeta va donde quepa dentro de la pantalla: abajo o arriba del recuadro; si es una columna alta
+  // (escritorio), a su lado; y si nada cabe, encima. Así nunca queda fuera de la vista.
+  const cardH = 300; // alto estimado de la tarjeta
+  const m = 12;
+  const gap = pad + 16;
+  const clampX = (x: number) => Math.min(Math.max(m, x), Math.max(m, vp.w - cardW - m));
+  const clampY = (y: number) => Math.min(Math.max(m, y), Math.max(m, vp.h - cardH - m));
+  let cardStyle: React.CSSProperties = { left: clampX((vp.w - cardW) / 2), top: clampY(vp.h / 2 - cardH / 2), width: cardW };
   if (rect) {
-    const below = rect.top + rect.height / 2 < vp.h / 2;
-    const left = Math.min(Math.max(12, rect.left + rect.width / 2 - cardW / 2), vp.w - cardW - 12);
-    cardStyle = below
-      ? { left, top: Math.min(rect.top + rect.height + 16, vp.h - 260), width: cardW }
-      : { left, bottom: Math.max(12, vp.h - rect.top + 16), width: cardW };
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+    const spaceBelow = vp.h - (rect.top + rect.height) - gap - m;
+    const spaceAbove = rect.top - gap - m;
+    const spaceRight = vp.w - (rect.left + rect.width) - gap - m;
+    const spaceLeft = rect.left - gap - m;
+    const below = { left: clampX(cx - cardW / 2), top: rect.top + rect.height + gap, width: cardW };
+    const above = { left: clampX(cx - cardW / 2), top: rect.top - gap - cardH, width: cardW };
+    const right = { left: rect.left + rect.width + gap, top: clampY(cy - cardH / 2), width: cardW };
+    const leftSide = { left: rect.left - gap - cardW, top: clampY(cy - cardH / 2), width: cardW };
+    const vertical: [boolean, React.CSSProperties][] =
+      cy < vp.h / 2
+        ? [[spaceBelow >= cardH, below], [spaceAbove >= cardH, above]]
+        : [[spaceAbove >= cardH, above], [spaceBelow >= cardH, below]];
+    const sides: [boolean, React.CSSProperties][] =
+      cx < vp.w / 2
+        ? [[spaceRight >= cardW, right], [spaceLeft >= cardW, leftSide]]
+        : [[spaceLeft >= cardW, leftSide], [spaceRight >= cardW, right]];
+    const pick = [...vertical, ...sides].find(([fits]) => fits);
+    // Sin espacio en ningún lado (el recuadro ocupa casi toda la pantalla): sobre el recuadro, centrada.
+    cardStyle = pick ? pick[1] : { left: clampX(cx - cardW / 2), top: clampY(cy - cardH / 2), width: cardW };
   }
 
   return (
