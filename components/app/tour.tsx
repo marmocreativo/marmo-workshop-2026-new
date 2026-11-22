@@ -23,7 +23,7 @@ const STEPS: Record<Exclude<TourStep, "result">, Info> = {
   process: {
     n: 3,
     title: "Ahora, procesa",
-    text: "Pulsa Procesar y espera a que termine. Puede tardar hasta un minuto; no cierres la página.",
+    text: "Pulsa Procesar y espera a que termine. Esta primera generación es gratis con los modelos estándar. Puede tardar hasta un minuto; no cierres la página.",
     target: "process",
   },
   wait: {

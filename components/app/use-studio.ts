@@ -5,7 +5,7 @@ import { noTokensPopup, toast } from "@/lib/alerts";
 import { api, fileUrl, jsonBody, resizeImage } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { MODELS, getModel, resolveRatio } from "@/lib/models";
-import { tokensFor } from "@/lib/tokens";
+import { FREE_FIRST_MAX_TOKENS, tokensFor } from "@/lib/tokens";
 import type { CommunityPreset, Generation, Modifier, Preset } from "@/lib/types";
 import type { BillingMe } from "./billing-panel";
 import { emitBalance, requestBalanceRefresh } from "@/lib/balance";
@@ -54,7 +54,9 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
   // Costo en tokens de la generación elegida (null = modelo deshabilitado por el administrador).
   const modelDef = getModel(model);
   const tokenCost = billing && modelDef ? tokensFor(modelDef, ratio, billing.pricing) : null;
-  const canAfford = !billing || billing.account.bypass || (tokenCost !== null && billing.account.tokens >= tokenCost);
+  // Primera generación del tutorial: gratis con modelos estándar (el servidor decide; aquí solo se refleja).
+  const freeFirst = !!billing?.account.freeFirst && tokenCost !== null && tokenCost <= FREE_FIRST_MAX_TOKENS;
+  const canAfford = !billing || billing.account.bypass || freeFirst || (tokenCost !== null && billing.account.tokens >= tokenCost);
   // Se pueden lanzar varias peticiones a la vez: `pending` cuenta las que siguen en proceso.
   const [pending, setPending] = useState(0);
   const busy = pending > 0;
@@ -184,7 +186,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     if (!canAfford) return outOfTokens();
     setPending((n) => n + 1);
     // El servidor cobra al recibir la petición: se refleja de inmediato y luego se reconcilia con el saldo real.
-    if (billing && !billing.account.bypass && tokenCost) emitBalance(Math.max(0, balRef.current - tokenCost));
+    if (billing && !billing.account.bypass && !freeFirst && tokenCost) emitBalance(Math.max(0, balRef.current - tokenCost));
     try {
       const form = new FormData();
       form.set("image", await resizeImage(image));
@@ -393,6 +395,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     billing,
     loadBilling,
     tokenCost,
+    freeFirst,
     canAfford,
     ratio,
     setRatio,

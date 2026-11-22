@@ -23,6 +23,8 @@ export type BillingMe = {
     cancel_at_period_end: number;
     has_customer: boolean;
     bypass: boolean;
+    /** Primera generación del tutorial gratis (con modelos de hasta FREE_FIRST_MAX_TOKENS). */
+    freeFirst?: boolean;
   };
   plans: Plan[];
   packs: Pack[];

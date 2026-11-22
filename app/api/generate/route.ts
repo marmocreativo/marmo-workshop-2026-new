@@ -1,12 +1,12 @@
 import { fal } from "@fal-ai/client";
 import { HttpError, authed, handle } from "@/lib/api";
 import { billingBypass } from "@/lib/auth";
-import { getPricing, refundUsage, spendTokens } from "@/lib/billing";
+import { firstGenerationFree, getPricing, refundUsage, spendTokens } from "@/lib/billing";
 import { batch, query, run, uid } from "@/lib/db";
 import { extractResultUrl, getModel, resolveRatio } from "@/lib/models";
 import { buildPrompt } from "@/lib/prompt";
 import { saveDeduped } from "@/lib/files";
-import { tokensFor } from "@/lib/tokens";
+import { FREE_FIRST_MAX_TOKENS, tokensFor } from "@/lib/tokens";
 
 export const maxDuration = 300;
 
@@ -45,7 +45,9 @@ export const POST = handle(async (req: Request) => {
   const tokens = tokensFor(model, ratio, await getPricing());
   if (tokens === null) throw new HttpError(400, "Este modelo no está disponible por ahora");
   const id = uid();
-  const charged = billingBypass() ? 0 : tokens;
+  // Primera generación del tutorial: gratis (solo con modelos estándar).
+  const free = tokens <= FREE_FIRST_MAX_TOKENS && (await firstGenerationFree(user));
+  const charged = billingBypass() || free ? 0 : tokens;
   if (charged > 0) {
     const spent = await spendTokens(user.id, charged, `Generación con ${model.label}`, id);
     if (!spent.ok)

@@ -35,6 +35,9 @@ export function tokensFor(model: ModelDef, ratio: string, p: TokenPricing): numb
   return autoTokens(model, ratio, p);
 }
 
+/** Tope de la primera generación gratis del tutorial: con modelos más caros (Pro, GPT Image, video) se cobra normal. */
+export const FREE_FIRST_MAX_TOKENS = 10;
+
 export const formatMxn = (cents: number) =>
   new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN", maximumFractionDigits: cents % 100 ? 2 : 0 }).format(
     cents / 100,

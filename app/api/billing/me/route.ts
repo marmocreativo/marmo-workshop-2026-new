@@ -1,14 +1,15 @@
 import { authed, handle } from "@/lib/api";
-import { getPricing, listPacks, listPlans, recentLedger } from "@/lib/billing";
+import { firstGenerationFree, getPricing, listPacks, listPlans, recentLedger } from "@/lib/billing";
 
 // Saldo, plan actual, planes/packs disponibles y precios de tokens (todo lo que necesita la UI).
 export const GET = handle(async () => {
   const user = await authed();
-  const [plans, packs, pricing, ledger] = await Promise.all([
+  const [plans, packs, pricing, ledger, freeFirst] = await Promise.all([
     listPlans(),
     listPacks(),
     getPricing(),
     recentLedger(user.id, 30),
+    firstGenerationFree(user),
   ]);
   return Response.json({
     account: {
@@ -21,6 +22,7 @@ export const GET = handle(async () => {
       cancel_at_period_end: user.cancel_at_period_end,
       has_customer: !!user.stripe_customer_id,
       bypass: process.env.BILLING_BYPASS === "true",
+      freeFirst,
     },
     plans,
     packs,

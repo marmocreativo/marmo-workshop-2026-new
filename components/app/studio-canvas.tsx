@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useLayoutEffect, useRef, useState } from "react";
-import { Camera, ChevronDown, ClipboardPaste, Eraser, FolderOpen, ImagePlus, Loader2, Pencil, Sparkles, X } from "lucide-react";
+import { Camera, ClipboardPaste, Eraser, FolderOpen, ImagePlus, Loader2, Pencil, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getModel, MODELS } from "@/lib/models";
 import { cn } from "@/lib/utils";
 import type { Modifier } from "@/lib/types";
 import { CameraDialog } from "./camera-dialog";
 import { ModelSelect } from "./model-select";
+import { RatioSelect } from "./ratio-select";
 import { CategoryIcon } from "./category-icon";
 import { ModifierEditor } from "./modifier-editor";
 import type { StudioState } from "./use-studio";
@@ -24,39 +25,10 @@ const OVERLAY_SAFE = 250; // alto reservado abajo para los controles
 
 type Pt = { x: number; y: number }; // fracciones del lienzo (0-1)
 
-// Select "ghost" nativo sobre fondo oscuro.
-function GhostSelect({
-  value,
-  onChange,
-  children,
-  label,
-  disabled,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  children: React.ReactNode;
-  label: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="relative min-w-0 flex-1">
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(e) => onChange(e.target.value)}
-        aria-label={label}
-        className="h-10 w-full cursor-pointer appearance-none truncate rounded-xl bg-white/10 pr-8 pl-3 text-sm font-medium text-white outline-none hover:bg-white/20 focus-visible:ring-2 focus-visible:ring-primary disabled:cursor-default disabled:opacity-60 [&>option]:bg-neutral-900 [&>option]:text-white"
-      >
-        {children}
-      </select>
-      <ChevronDown className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-white/70" />
-    </div>
-  );
-}
-
 export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.ReactNode }) {
   const top0 = corner ? TOP_WITH_CORNER : TOP;
   const boxRef = useRef<HTMLDivElement>(null);
+  const [menuOpen, setMenuOpen] = useState(false); // con un menú abierto, los controles suben por encima de los pointers
   const fileRef = useRef<HTMLInputElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [dragging, setDragging] = useState(false);
@@ -351,7 +323,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
         ))}
 
         {/* Overlay inferior con los controles, siempre fijo abajo */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black via-black/70 to-transparent px-4 pt-24 pb-4">
+        <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-4 pt-24 pb-4", menuOpen ? "z-50" : "z-20")}>
           <div data-tour="controls" className="pointer-events-auto mx-auto flex max-w-2xl flex-col gap-2">
             <input
               value={s.freeText}
@@ -362,18 +334,8 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
               className="h-11 w-full rounded-xl bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/50 hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-primary"
             />
             <div className="flex gap-2">
-              <GhostSelect label="Proporción" value={model.ratios.length ? s.ratio : "auto"} onChange={s.setRatio} disabled={model.ratios.length === 0}>
-                {model.ratios.length === 0 ? (
-                  <option value="auto">Proporción original</option>
-                ) : (
-                  ["auto", ...model.ratios].map((r) => (
-                    <option key={r} value={r}>
-                      {r === "auto" ? "Proporción: auto" : r}
-                    </option>
-                  ))
-                )}
-              </GhostSelect>
-              <ModelSelect value={s.model} onChange={s.setModel} />
+              <RatioSelect value={s.ratio} onChange={s.setRatio} ratios={model.ratios} onOpenChange={setMenuOpen} />
+              <ModelSelect value={s.model} onChange={s.setModel} onOpenChange={setMenuOpen} />
             </div>
             <div className="flex items-center gap-2 text-xs text-white/70">
               <span className="flex-1">
@@ -381,7 +343,9 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
                   ? "Modelo no disponible por ahora"
                   : s.billing?.account.bypass
                     ? "Costo: 0 (modo desarrollo)"
-                    : `Costo: ${s.tokenCost} tokens`}
+                    : s.freeFirst
+                      ? "Gratis: tu primera generación del tutorial"
+                      : `Costo: ${s.tokenCost} tokens`}
               </span>
               {s.billing && !s.billing.account.bypass && <span>Saldo: {s.billing.account.tokens}</span>}
               {!s.canAfford && (

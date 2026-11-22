@@ -2,6 +2,13 @@ import type { InValue } from "@libsql/client";
 import { batch, one, query, run, uid } from "./db";
 import { DEFAULT_PRICING, type TokenPricing } from "./tokens";
 
+/** La primera generación del tutorial es gratis: cuenta con el tutorial pendiente y sin ninguna generación previa. */
+export async function firstGenerationFree(user: { id: string; onboarded: number }) {
+  if (user.onboarded !== 0) return false;
+  const prior = await one("SELECT 1 FROM generations WHERE user_id=? AND status!='error' LIMIT 1", [user.id]);
+  return !prior;
+}
+
 export type Plan = {
   id: string;
   name: string;
