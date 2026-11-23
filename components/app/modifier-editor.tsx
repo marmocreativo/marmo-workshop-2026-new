@@ -11,6 +11,7 @@ import { api, jsonBody, resizeImage } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import type { Category, Modifier } from "@/lib/types";
 import { CategorySelect } from "./category-select";
+import { CategoryIcon } from "./category-icon";
 
 type Suggestion = { categoryId: string; text: string; selected: boolean };
 
@@ -53,7 +54,7 @@ export function ModifierEditor({
   const originRef = useRef<File | null>(null);
   const [analysisTokens, setAnalysisTokens] = useState<number | null>(null);
   const [originUrl, setOriginUrl] = useState<string | null>(null);
-  const [applyMode, setApplyMode] = useState<"add" | "replace">("add");
+  const [applyMode, setApplyMode] = useState<"add" | "replace">("replace");
 
   // Vista previa de la imagen que se está analizando.
   function showOrigin(file: File | null) {
@@ -79,7 +80,7 @@ export function ModifierEditor({
     showOrigin(null);
     setMode(initialMode);
     setSuggestions([]);
-    setApplyMode("add");
+    setApplyMode("replace");
     setText(editing?.text ?? "");
     setCategoryId(editing?.category_id ?? defaultCategoryId ?? categories[0]?.id ?? "");
   }, [open, editing, defaultCategoryId, categories, initialMode]);
@@ -192,7 +193,7 @@ export function ModifierEditor({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[88dvh] overflow-y-auto">
+      <DialogContent className={cn("max-h-[88dvh] overflow-y-auto", mode === "analyze" && suggestions.length > 0 && "lg:max-w-4xl")}>
         <DialogHeader>
           <DialogTitle>{editing ? "Editar modificador" : "Nuevo modificador"}</DialogTitle>
           <DialogDescription>
@@ -279,7 +280,7 @@ export function ModifierEditor({
 
             {suggestions.length > 0 && (
               <>
-                <ul className="space-y-2">
+                <ul className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {suggestions.map((s, i) => (
                     <li key={i}>
                       <button
@@ -288,7 +289,7 @@ export function ModifierEditor({
                           setSuggestions((all) => all.map((x, j) => (j === i ? { ...x, selected: !x.selected } : x)))
                         }
                         className={cn(
-                          "flex w-full items-start gap-3 rounded-lg border p-3 text-left",
+                          "flex h-full w-full items-start gap-3 rounded-lg border p-3 text-left",
                           s.selected ? "border-primary bg-primary/5" : "opacity-60",
                         )}
                       >
@@ -300,8 +301,11 @@ export function ModifierEditor({
                         >
                           {s.selected && <Check className="size-3" />}
                         </span>
-                        <span>
-                          <span className="block text-xs font-medium text-muted-foreground">{catName(s.categoryId)}</span>
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                            <CategoryIcon slug={categories.find((c) => c.id === s.categoryId)?.slug} className="size-3.5 text-primary" />
+                            {catName(s.categoryId)}
+                          </span>
                           <span className="text-sm">{s.text}</span>
                         </span>
                       </button>
@@ -312,8 +316,8 @@ export function ModifierEditor({
                   <div role="radiogroup" aria-label="Qué hacer con los modificadores actuales" className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1 text-sm font-medium">
                     {(
                       [
-                        ["add", `Agregar a los ${selectedCount} actuales`],
                         ["replace", "Reemplazar los actuales"],
+                        ["add", `Agregar a los ${selectedCount} actuales`],
                       ] as const
                     ).map(([v, label]) => (
                       <button
