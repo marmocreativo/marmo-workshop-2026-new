@@ -55,6 +55,18 @@ export function alertBox(title: string, text?: string, icon: "info" | "error" | 
   return Swal.fire({ ...theme, icon, title, text, confirmButtonText: "Entendido" });
 }
 
+/** Muestra las instrucciones de un preset (texto del autor) al elegirlo. */
+export function instructionsPopup(title: string, text: string) {
+  const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return Swal.fire({
+    ...theme,
+    icon: "info",
+    title,
+    html: `<div style="white-space:pre-line;text-align:left">${esc}</div>`,
+    confirmButtonText: "Entendido",
+  });
+}
+
 /** Aviso de tokens agotados: devuelve "plan", "tokens" o null si lo cierra. */
 export async function noTokensPopup(): Promise<"plan" | "tokens" | null> {
   const r = await Swal.fire({

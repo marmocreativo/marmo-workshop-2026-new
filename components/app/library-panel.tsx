@@ -197,7 +197,7 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
       )}
 
       <ModifierEditor open={editorOpen} onOpenChange={setEditorOpen} initialMode={editorMode} categories={s.categories} onSaved={s.applyCreated} appliesOnScan selectedCount={s.selected.size} />
-      <PresetSaveDialog open={saveOpen} onOpenChange={setSaveOpen} hasImage={!!s.image} onSave={s.savePreset} />
+      <PresetSaveDialog open={saveOpen} onOpenChange={setSaveOpen} hasImage={!!s.image} materialCount={s.materials.length} onSave={s.savePreset} />
     </div>
   );
 }

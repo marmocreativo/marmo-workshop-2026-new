@@ -8,7 +8,10 @@ export type ModelDef = {
   kind: "image" | "video";
   /** Proporciones que acepta el modelo (sin "auto"). Vacío = conserva la de la foto de referencia. */
   ratios: string[];
-  input: (prompt: string, imageUrl: string, ratio: string) => Record<string, unknown>;
+  /** Máximo de imágenes extra ("materiales": logos, ropa, fondos...) además de la foto de referencia. 0 = solo admite una imagen. */
+  maxMaterials: number;
+  /** urls[0] es la foto de referencia; el resto son materiales. */
+  input: (prompt: string, urls: string[], ratio: string) => Record<string, unknown>;
   /** Costo estimado por generación en USD (precios publicados por fal.ai; revisarlos de vez en cuando). */
   cost: (ratio: string) => Cost;
 };
@@ -34,7 +37,8 @@ export const MODELS: ModelDef[] = [
     endpoint: "fal-ai/nano-banana/edit",
     kind: "image",
     ratios: NANO_RATIOS,
-    input: (prompt, url, ratio) => ({ prompt, image_urls: [url], num_images: 1, aspect_ratio: ratio }),
+    maxMaterials: 3,
+    input: (prompt, urls, ratio) => ({ prompt, image_urls: urls, num_images: 1, aspect_ratio: ratio }),
     cost: () => ({ usd: 0.0398 }),
   },
   {
@@ -44,7 +48,8 @@ export const MODELS: ModelDef[] = [
     endpoint: "fal-ai/nano-banana-pro/edit",
     kind: "image",
     ratios: NANO_RATIOS,
-    input: (prompt, url, ratio) => ({ prompt, image_urls: [url], num_images: 1, aspect_ratio: ratio }),
+    maxMaterials: 3,
+    input: (prompt, urls, ratio) => ({ prompt, image_urls: urls, num_images: 1, aspect_ratio: ratio }),
     cost: () => ({ usd: 0.15 }), // 1K/2K; 4K costaría el doble
   },
   {
@@ -54,9 +59,10 @@ export const MODELS: ModelDef[] = [
     endpoint: "fal-ai/bytedance/seedream/v4/edit",
     kind: "image",
     ratios: ["1:1", "4:5", "3:4", "2:3", "9:16", "5:4", "4:3", "3:2", "16:9", "21:9"],
-    input: (prompt, url, ratio) => ({
+    maxMaterials: 3,
+    input: (prompt, urls, ratio) => ({
       prompt,
-      image_urls: [url],
+      image_urls: urls,
       num_images: 1,
       ...(ratio === "auto" ? {} : { image_size: seedreamSize(ratio) }),
     }),
@@ -74,9 +80,10 @@ export const MODELS: ModelDef[] = [
     endpoint: "fal-ai/gpt-image-1.5/edit",
     kind: "image",
     ratios: Object.keys(GPT_SIZES),
-    input: (prompt, url, ratio) => ({
+    maxMaterials: 3,
+    input: (prompt, urls, ratio) => ({
       prompt,
-      image_urls: [url],
+      image_urls: urls,
       num_images: 1,
       image_size: GPT_SIZES[ratio] ?? "auto",
     }),
@@ -90,7 +97,8 @@ export const MODELS: ModelDef[] = [
     endpoint: "xai/grok-imagine-image/edit",
     kind: "image",
     ratios: [],
-    input: (prompt, url) => ({ prompt, image_url: url }),
+    maxMaterials: 0,
+    input: (prompt, urls) => ({ prompt, image_url: urls[0] }),
     cost: () => ({ usd: 0.022 }),
   },
   {
@@ -100,7 +108,8 @@ export const MODELS: ModelDef[] = [
     endpoint: "fal-ai/bytedance/seedance/v1/pro/image-to-video",
     kind: "video",
     ratios: [],
-    input: (prompt, url) => ({ prompt, image_url: url }),
+    maxMaterials: 0,
+    input: (prompt, urls) => ({ prompt, image_url: urls[0] }),
     cost: () => ({ usd: 0.62 }), // clip de 5 s a 1080p
   },
 ];

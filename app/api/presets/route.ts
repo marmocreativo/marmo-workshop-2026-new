@@ -4,14 +4,18 @@ import { one, query, run, uid } from "@/lib/db";
 import { readStored, saveFile } from "@/lib/storage";
 import type { Preset } from "@/lib/types";
 
-type Row = Omit<Preset, "modifier_ids"> & { modifier_ids: string };
+type Row = Omit<Preset, "modifier_ids" | "materials"> & { modifier_ids: string; materials: string | null };
 
-const parse = (r: Row): Preset => ({ ...r, modifier_ids: JSON.parse(r.modifier_ids) as string[] });
+const parse = (r: Row): Preset => ({
+  ...r,
+  modifier_ids: JSON.parse(r.modifier_ids) as string[],
+  materials: r.materials ? (JSON.parse(r.materials) as string[]) : [],
+});
 
 export const GET = handle(async () => {
   const user = await authed();
   const rows = await query<Row>(
-    "SELECT id,name,free_text,ref_file,modifier_ids,is_public,created_at FROM presets WHERE user_id=? ORDER BY created_at DESC LIMIT 200",
+    "SELECT id,name,free_text,instructions,materials,ref_file,modifier_ids,is_public,created_at FROM presets WHERE user_id=? ORDER BY created_at DESC LIMIT 200",
     [user.id],
   );
   return Response.json({ presets: rows.map(parse) });
@@ -20,6 +24,7 @@ export const GET = handle(async () => {
 const fields = z.object({
   name: z.string().trim().min(1).max(60),
   freeText: z.string().trim().max(1000).optional(),
+  instructions: z.string().trim().max(1000).optional(),
   modifierIds: z.array(z.string()).max(60),
 });
 
@@ -55,6 +60,8 @@ export const POST = handle(async (req: Request) => {
       id: uid(),
       name,
       free_text: g.free_text || null,
+      instructions: null,
+      materials: [],
       ref_file: cover,
       modifier_ids: mods.map((m) => m.modifier_id),
       is_public: 0,
@@ -78,7 +85,12 @@ export const POST = handle(async (req: Request) => {
   } catch {
     throw new HttpError(400, "Modificadores inválidos");
   }
-  const data = fields.parse({ name: form.get("name"), freeText: form.get("freeText") ?? undefined, modifierIds: ids });
+  const data = fields.parse({
+    name: form.get("name"),
+    freeText: form.get("freeText") ?? undefined,
+    instructions: form.get("instructions") ?? undefined,
+    modifierIds: ids,
+  });
   if (!data.modifierIds.length && !data.freeText) throw new HttpError(400, "Elige al menos un modificador o escribe un texto");
 
   // Solo modificadores propios.
@@ -95,20 +107,31 @@ export const POST = handle(async (req: Request) => {
     if (image.size > 6 * 1024 * 1024) throw new HttpError(413, "La imagen es muy pesada");
     refFile = await saveFile(user.id, Buffer.from(await image.arrayBuffer()), image.type === "image/png" ? "png" : "jpg");
   }
+  const matFiles: string[] = [];
+  for (const f of form.getAll("materials").slice(0, 3)) {
+    if (!(f instanceof File) || f.size === 0) continue;
+    if (!f.type.startsWith("image/")) throw new HttpError(400, "Los materiales deben ser imágenes");
+    if (f.size > 8 * 1024 * 1024) throw new HttpError(413, "Un material es muy pesado");
+    matFiles.push(await saveFile(user.id, Buffer.from(await f.arrayBuffer()), f.type === "image/png" ? "png" : "jpg"));
+  }
   const preset: Preset = {
     id: uid(),
     name: data.name,
     free_text: data.freeText || null,
+    instructions: data.instructions || null,
+    materials: matFiles,
     ref_file: refFile,
     modifier_ids: valid,
     is_public: 0,
     created_at: Date.now(),
   };
-  await run("INSERT INTO presets(id,user_id,name,free_text,ref_file,modifier_ids,created_at) VALUES(?,?,?,?,?,?,?)", [
+  await run("INSERT INTO presets(id,user_id,name,free_text,instructions,materials,ref_file,modifier_ids,created_at) VALUES(?,?,?,?,?,?,?,?,?)", [
     preset.id,
     user.id,
     preset.name,
     preset.free_text,
+    preset.instructions,
+    matFiles.length ? JSON.stringify(matFiles) : null,
     preset.ref_file,
     JSON.stringify(valid),
     preset.created_at,

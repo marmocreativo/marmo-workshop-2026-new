@@ -6,6 +6,7 @@ import { confirmAction, toast } from "@/lib/alerts";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { fileUrl } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import type { CommunityPreset, Preset } from "@/lib/types";
@@ -124,22 +125,26 @@ export function PresetSaveDialog({
   open,
   onOpenChange,
   hasImage,
+  materialCount = 0,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
   hasImage: boolean;
-  onSave: (name: string, withImage: boolean) => Promise<void>;
+  materialCount?: number;
+  onSave: (name: string, withImage: boolean, instructions: string) => Promise<void>;
 }) {
   const [name, setName] = useState("");
+  const [instructions, setInstructions] = useState("");
   const [withImage, setWithImage] = useState(true);
   const [busy, setBusy] = useState(false);
 
   async function submit() {
     setBusy(true);
     try {
-      await onSave(name.trim(), withImage && hasImage);
+      await onSave(name.trim(), withImage && hasImage, instructions.trim());
       setName("");
+      setInstructions("");
       onOpenChange(false);
     } catch (e) {
       toast.error((e as Error).message);
@@ -164,6 +169,19 @@ export function PresetSaveDialog({
           autoFocus
           onKeyDown={(e) => e.key === "Enter" && name.trim() && !busy && submit()}
         />
+        <Textarea
+          value={instructions}
+          onChange={(e) => setInstructions(e.target.value)}
+          maxLength={1000}
+          rows={3}
+          placeholder="Instrucciones (opcional): se muestran al elegir el preset, p. ej. qué materiales subir"
+          className="text-base"
+        />
+        {materialCount > 0 && (
+          <p className="text-sm text-muted-foreground">
+            Se guardarán también tus {materialCount} material{materialCount === 1 ? "" : "es"} actuales; podrás editarlos después.
+          </p>
+        )}
         {hasImage && (
           <label className="flex items-center gap-2 text-sm">
             <input

@@ -47,6 +47,10 @@ export type Preset = {
   name: string;
   free_text: string | null;
   ref_file: string | null;
+  /** Mensaje que se muestra en un diálogo al elegir el preset (cómo usarlo, qué materiales subir...). */
+  instructions: string | null;
+  /** Archivos de los materiales (imágenes extra) del preset; se cargan en el Studio y se pueden editar. */
+  materials: string[];
   modifier_ids: string[];
   /** 1 = visible para la comunidad (otros pueden guardarlo en su biblioteca). */
   is_public: number;

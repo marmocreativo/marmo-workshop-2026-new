@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { noTokensPopup, toast } from "@/lib/alerts";
+import { instructionsPopup, noTokensPopup, toast } from "@/lib/alerts";
 import { api, fileUrl, jsonBody, resizeImage } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { MODELS, getModel, resolveRatio } from "@/lib/models";
@@ -24,6 +24,8 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
   const [preview, setPreview] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [freeText, setFreeText] = useState("");
+  // Materiales: imágenes extra (logos, ropa, fondos...) que se mandan junto a la foto de referencia.
+  const [materials, setMaterials] = useState<File[]>([]);
   const [model, setModel] = useState(MODELS[0].id);
   const [ratioChoice, setRatio] = useState("auto");
   // Si el modelo elegido no soporta la proporción, se usa "auto".
@@ -126,6 +128,20 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     [library],
   );
 
+  const maxMaterials = (getModel(model) ?? MODELS[0]).maxMaterials;
+  const addMaterials = useCallback(
+    async (files: File[]) => {
+      const imgs = files.filter((f) => f.type.startsWith("image/"));
+      if (!imgs.length) return;
+      const room = Math.max(0, maxMaterials - materials.length);
+      if (imgs.length > room) toast.message(`Este modelo admite hasta ${maxMaterials} materiales`);
+      const small = await Promise.all(imgs.slice(0, room).map((f) => resizeImage(f, 1280).catch(() => f)));
+      setMaterials((m) => [...m, ...small].slice(0, maxMaterials));
+    },
+    [maxMaterials, materials.length],
+  );
+  const removeMaterial = useCallback((i: number) => setMaterials((m) => m.filter((_, k) => k !== i)), []);
+
   const clearSelected = useCallback(() => setSelected(new Set()), []);
 
   // Basta con un modificador o con texto en el prompt manual.
@@ -194,6 +210,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
       form.set("aspectRatio", ratio);
       form.set("freeText", freeText);
       form.set("modifierIds", jsonBody([...selected]));
+      for (const m of materials.slice(0, maxMaterials)) form.append("materials", m);
       const out = await api<GenerateResult>("/api/generate", { method: "POST", body: form });
       setResult(out);
       await Promise.all([loadGens(), library.refresh()]).catch(() => {});
@@ -270,20 +287,40 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
   }
 
   // Presets: solo modificadores + texto extra (la imagen es una portada y no se carga como foto).
+  // Carga los materiales guardados del preset (son editables: se pueden quitar o agregar otros).
+  async function loadPresetMaterials(files: string[]) {
+    try {
+      const loaded = await Promise.all(
+        files.map(async (name) => {
+          const blob = await (await fetch(fileUrl(name))).blob();
+          return new File([blob], name, { type: blob.type || "image/jpeg" });
+        }),
+      );
+      setMaterials(loaded.slice(0, 3));
+    } catch {
+      toast.error("No pude cargar los materiales del preset");
+    }
+  }
+
   function applyPreset(p: Preset) {
+    setMaterials([]);
+    if (p.materials?.length) loadPresetMaterials(p.materials);
     const alive = new Set(library.modifiers.map((m) => m.id));
     const ids = p.modifier_ids.filter((id) => alive.has(id));
     setSelected(new Set(ids));
     setFreeText(p.free_text ?? "");
     if (ids.length < p.modifier_ids.length) toast.message("Algunos modificadores del preset ya no existen");
-    toast.success(`Preset "${p.name}" aplicado`);
+    if (p.instructions) instructionsPopup(p.name, p.instructions);
+    else toast.success(`Preset "${p.name}" aplicado`);
   }
 
-  async function savePreset(name: string, withImage: boolean) {
+  async function savePreset(name: string, withImage: boolean, instructions = "") {
     const form = new FormData();
     form.set("name", name);
     form.set("freeText", freeText);
     form.set("modifierIds", jsonBody([...selected]));
+    form.set("instructions", instructions);
+    for (const m of materials.slice(0, 3)) form.append("materials", m);
     if (withImage && image) form.set("image", await resizeImage(image, 640));
     await api("/api/presets", { method: "POST", body: form });
     await library.refresh();
@@ -326,7 +363,10 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
       const alive = new Set(m.modifiers.map((x) => x.id));
       setSelected(new Set(fresh.modifier_ids.filter((x) => alive.has(x))));
       setFreeText(fresh.free_text ?? "");
-      toast.success(`Preset "${fresh.name}" aplicado`);
+      setMaterials([]);
+      if (fresh.materials.length) loadPresetMaterials(fresh.materials);
+      if (fresh.instructions) instructionsPopup(fresh.name, fresh.instructions);
+      else toast.success(`Preset "${fresh.name}" aplicado`);
     } catch (e) {
       toast.error((e as Error).message);
     }
@@ -390,6 +430,10 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     chosen,
     freeText,
     setFreeText,
+    materials,
+    maxMaterials,
+    addMaterials,
+    removeMaterial,
     model,
     setModel,
     billing,

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useLayoutEffect, useRef, useState } from "react";
-import { Camera, ClipboardPaste, Eraser, FolderOpen, ImagePlus, Loader2, Pencil, Sparkles, X } from "lucide-react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Camera, ClipboardPaste, Paperclip, Eraser, FolderOpen, ImagePlus, Loader2, Pencil, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { getModel, MODELS } from "@/lib/models";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,26 @@ const TOP = 16;
 const TOP_WITH_CORNER = 68; // deja libres los botones de los drawers (móvil)
 const OVERLAY_SAFE = 250; // alto reservado abajo para los controles
 
+// Miniatura de un material con botón para quitarlo.
+function MaterialThumb({ file, onRemove }: { file: File; onRemove: () => void }) {
+  const url = useMemo(() => URL.createObjectURL(file), [file]);
+  useEffect(() => () => URL.revokeObjectURL(url), [url]);
+  return (
+    <div className="relative size-11 shrink-0">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {url && <img src={url} alt="Material" className="size-full rounded-xl object-cover" />}
+      <button
+        type="button"
+        aria-label="Quitar material"
+        onClick={onRemove}
+        className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-black text-white ring-1 ring-white/40 hover:bg-primary"
+      >
+        <X className="size-3" />
+      </button>
+    </div>
+  );
+}
+
 type Pt = { x: number; y: number }; // fracciones del lienzo (0-1)
 
 export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.ReactNode }) {
@@ -30,6 +50,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
   const boxRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false); // con un menú abierto, los controles suben por encima de los pointers
   const fileRef = useRef<HTMLInputElement>(null);
+  const matRef = useRef<HTMLInputElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [dragging, setDragging] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -325,14 +346,41 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
         {/* Overlay inferior con los controles, siempre fijo abajo */}
         <div className={cn("pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/70 to-transparent px-4 pt-24 pb-4", menuOpen ? "z-50" : "z-20")}>
           <div data-tour="controls" className="pointer-events-auto mx-auto flex max-w-2xl flex-col gap-2">
+            <div className="flex items-center gap-2">
+              <input
+                ref={matRef}
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={(e) => {
+                  s.addMaterials([...(e.target.files ?? [])]);
+                  e.target.value = "";
+                }}
+              />
+              {s.materials.map((m, i) => (
+                <MaterialThumb key={i} file={m} onRemove={() => s.removeMaterial(i)} />
+              ))}
+              {s.maxMaterials > 0 && s.materials.length < s.maxMaterials && (
+                <button
+                  type="button"
+                  title="Agregar material (logo, prenda, fondo...)"
+                  aria-label="Agregar material"
+                  onClick={() => matRef.current?.click()}
+                  className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20"
+                >
+                  <Paperclip className="size-4" />
+                </button>
+              )}
             <input
               value={s.freeText}
               onChange={(e) => s.setFreeText(e.target.value)}
               maxLength={1000}
               placeholder="Describe modificaciones extra…"
               aria-label="Prompt manual"
-              className="h-11 w-full rounded-xl bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/50 hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-primary"
+              className="h-11 min-w-0 flex-1 rounded-xl bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/50 hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-primary"
             />
+            </div>
             <div className="flex gap-2">
               <RatioSelect value={s.ratio} onChange={s.setRatio} ratios={model.ratios} onOpenChange={setMenuOpen} />
               <ModelSelect value={s.model} onChange={s.setModel} onOpenChange={setMenuOpen} />

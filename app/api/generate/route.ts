@@ -37,9 +37,19 @@ export const POST = handle(async (req: Request) => {
 
   if (!mods.length && !freeText.trim()) throw new HttpError(400, "Elige un modificador o escribe el prompt manual");
 
+  // Materiales: imágenes extra (logos, ropa, fondos...) que el modelo incorpora al resultado.
+  const materials = form
+    .getAll("materials")
+    .filter((f): f is File => f instanceof File && f.size > 0)
+    .slice(0, model.maxMaterials);
+  for (const f of materials) {
+    if (!f.type.startsWith("image/")) throw new HttpError(400, "Los materiales deben ser imágenes");
+    if (f.size > 8 * 1024 * 1024) throw new HttpError(413, "Un material es muy pesado");
+  }
+
   const ratio = resolveRatio(model, String(form.get("aspectRatio") ?? "auto"));
   const cost = model.cost(ratio).usd;
-  const prompt = buildPrompt(mods, freeText, model.kind);
+  const prompt = buildPrompt(mods, freeText, model.kind, materials.length);
 
   // Cobro de tokens antes de gastar en el proveedor; si algo falla después, se devuelven.
   const tokens = tokensFor(model, ratio, await getPricing());
@@ -72,7 +82,8 @@ export const POST = handle(async (req: Request) => {
 
   try {
     const imageUrl = await fal.storage.upload(new Blob([new Uint8Array(sourceBuf)], { type: image.type || "image/jpeg" }));
-    const out = await fal.subscribe(model.endpoint, { input: model.input(prompt, imageUrl, ratio), logs: false });
+    const materialUrls = await Promise.all(materials.map((f) => fal.storage.upload(f)));
+    const out = await fal.subscribe(model.endpoint, { input: model.input(prompt, [imageUrl, ...materialUrls], ratio), logs: false });
     const resultUrl = extractResultUrl(out.data);
     if (!resultUrl) throw new Error("El modelo no devolvió ningún resultado");
 

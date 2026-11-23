@@ -44,6 +44,27 @@ export function PresetEditor(props: Props) {
   );
 }
 
+function MatThumb({ src, file, onRemove }: { src?: string; file?: File; onRemove: () => void }) {
+  const url = useMemo(() => src ?? (file ? URL.createObjectURL(file) : ""), [src, file]);
+  useEffect(() => () => {
+    if (file) URL.revokeObjectURL(url);
+  }, [file, url]);
+  return (
+    <div className="relative size-16">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={url} alt="Material" className="size-full rounded-xl border object-cover" />
+      <button
+        type="button"
+        aria-label="Quitar material"
+        onClick={onRemove}
+        className="absolute -top-1.5 -right-1.5 flex size-5 items-center justify-center rounded-full bg-foreground text-background"
+      >
+        <Trash2 className="size-3" />
+      </button>
+    </div>
+  );
+}
+
 function PresetForm({
   preset,
   onOpenChange,
@@ -53,6 +74,10 @@ function PresetForm({
 }: Props & { preset: Preset }) {
   const [name, setName] = useState(preset.name);
   const [freeText, setFreeText] = useState(preset.free_text ?? "");
+  const [instructions, setInstructions] = useState(preset.instructions ?? "");
+  const [keepMats, setKeepMats] = useState<string[]>(preset.materials ?? []);
+  const [newMats, setNewMats] = useState<File[]>([]);
+  const matRef = useRef<HTMLInputElement>(null);
   const [selected, setSelected] = useState<Set<string>>(
     () => new Set(preset.modifier_ids),
   );
@@ -103,7 +128,10 @@ function PresetForm({
       const form = new FormData();
       form.set("name", name.trim());
       form.set("freeText", freeText.trim());
+      form.set("instructions", instructions.trim());
       form.set("modifierIds", JSON.stringify([...selected]));
+      form.set("keepMaterials", JSON.stringify(keepMats));
+      for (const f of newMats) form.append("materials", f);
       if (cover) form.set("image", cover);
       if (removeCover) form.set("removeImage", "1");
       await api(`/api/presets/${preset.id}`, { method: "PATCH", body: form });
@@ -188,6 +216,55 @@ function PresetForm({
           placeholder="Describe modificaciones extra"
           className="text-base"
         />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">Instrucciones</label>
+        <Textarea
+          value={instructions}
+          onChange={(e) => setInstructions(e.target.value)}
+          maxLength={1000}
+          rows={3}
+          placeholder="Mensaje que se muestra al elegir el preset (opcional)"
+          className="text-base"
+        />
+      </div>
+
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium">Materiales</label>
+        <p className="text-xs text-muted-foreground">Imágenes extra (logos, prendas, fondos) que se cargan al elegir el preset; se pueden cambiar en cada uso.</p>
+        <input
+          ref={matRef}
+          type="file"
+          accept="image/*"
+          multiple
+          hidden
+          onChange={async (e) => {
+            const room = Math.max(0, 3 - keepMats.length - newMats.length);
+            const picked = [...(e.target.files ?? [])].filter((f) => f.type.startsWith("image/")).slice(0, room);
+            e.target.value = "";
+            const small = await Promise.all(picked.map((f) => resizeImage(f, 1280).catch(() => f)));
+            setNewMats((m) => [...m, ...small]);
+          }}
+        />
+        <div className="flex flex-wrap gap-2">
+          {keepMats.map((f) => (
+            <MatThumb key={f} src={fileUrl(f)} onRemove={() => setKeepMats((k) => k.filter((x) => x !== f))} />
+          ))}
+          {newMats.map((f, i) => (
+            <MatThumb key={i} file={f} onRemove={() => setNewMats((m) => m.filter((_, k) => k !== i))} />
+          ))}
+          {keepMats.length + newMats.length < 3 && (
+            <button
+              type="button"
+              aria-label="Agregar material"
+              onClick={() => matRef.current?.click()}
+              className="flex size-16 items-center justify-center rounded-xl border border-dashed text-muted-foreground hover:bg-muted"
+            >
+              <ImagePlus className="size-5" />
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="space-y-2">
