@@ -16,7 +16,7 @@ export type ReusePart = "reference" | "result" | "modifiers" | "text" | "model";
 type GenerateResult = { id: string; resultFile: string; kind: "image" | "video" };
 
 // Estado y acciones del Studio, compartidos entre la vista móvil y la de escritorio.
-export type TourStep = "photo" | "preset" | "process" | "wait" | "result" | "edit" | "final";
+export type TourStep = "intro" | "photo" | "preset" | "process" | "wait" | "result" | "edit" | "final";
 
 export function useStudio(initialRef?: string, onboarding = false, initialPreset?: string) {
   const library = useLibrary();
@@ -69,7 +69,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
   const [openId, setOpenIdRaw] = useState<string | null>(null);
   // Tutorial: "guide" (foto → preset → procesar) y luego result → edit → final, que avanzan por acciones del usuario.
   const [tourOn, setTourOn] = useState(onboarding);
-  const [tourPhase, setTourPhase] = useState<"guide" | "result" | "edit" | "final">("guide");
+  const [tourPhase, setTourPhase] = useState<"intro" | "guide" | "result" | "edit" | "final">("intro");
   const setOpenId = useCallback((id: string | null) => {
     setOpenIdRaw(id);
     if (!id) setTourPhase((p) => (p === "result" ? "edit" : p)); // al cerrar el resultado grande, sigue la explicación de ajustes
@@ -414,7 +414,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     setTourOn(false);
     api("/api/onboarding", { method: "POST" }).catch(() => {});
   };
-  const tour = { step: tourStep, finish: finishTour, next: () => setTourPhase((p) => (p === "edit" ? "final" : p)) };
+  const tour = { step: tourStep, finish: finishTour, next: () => setTourPhase((p) => (p === "edit" ? "final" : p === "intro" ? "guide" : p)) };
 
   return {
     ...library,

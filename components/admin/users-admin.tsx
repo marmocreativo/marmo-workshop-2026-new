@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { LedgerEntry, Payment } from "@/lib/billing";
 import { api, jsonBody } from "@/lib/client";
 import { formatMxn, formatTokens } from "@/lib/tokens";
+import { UserContent, type ContentTab } from "./user-content";
 
 type AdminUser = {
   id: string;
@@ -123,12 +124,16 @@ function UserDialog({ id, onClose, onChanged }: { id: string | null; onClose: ()
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [refundAmounts, setRefundAmounts] = useState<Record<string, string>>({});
+  const [tab, setTab] = useState<"account" | ContentTab>("account");
+  const [counts, setCounts] = useState<{ generations: number; modifiers: number; presets: number } | null>(null);
 
   const load = useCallback(async (uid: string) => {
     setD(await api<Detail>(`/api/admin/users/${uid}`));
   }, []);
   useEffect(() => {
     setD(null);
+    setTab("account");
+    setCounts(null);
     setAmount("");
     setNote("");
     if (id) load(id).catch((e: Error) => toast.error(e.message));
@@ -184,7 +189,7 @@ function UserDialog({ id, onClose, onChanged }: { id: string | null; onClose: ()
 
   return (
     <Dialog open={!!id} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90dvh] max-w-[calc(100%-1rem)] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90dvh] max-w-[calc(100%-1rem)] overflow-y-auto sm:max-w-4xl">
         {!d ? (
           <Skeleton className="h-64 rounded-2xl" />
         ) : (
@@ -199,6 +204,33 @@ function UserDialog({ id, onClose, onChanged }: { id: string | null; onClose: ()
               </DialogDescription>
             </DialogHeader>
 
+            <div role="tablist" className="flex gap-1 overflow-x-auto rounded-lg bg-muted p-1 text-sm font-medium">
+              {(
+                [
+                  ["account", "Cuenta"],
+                  ["generations", "Generaciones"],
+                  ["modifiers", "Modificadores"],
+                  ["presets", "Presets"],
+                ] as const
+              ).map(([v, label]) => (
+                <button
+                  key={v}
+                  type="button"
+                  role="tab"
+                  aria-selected={tab === v}
+                  onClick={() => setTab(v)}
+                  className={`h-9 flex-1 whitespace-nowrap rounded-md px-3 ${tab === v ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+                >
+                  {label}
+                  {v !== "account" && counts && " (" + counts[v] + ")"}
+                </button>
+              ))}
+            </div>
+
+            {tab !== "account" && <UserContent key={tab} userId={d.user.id} tab={tab} onCounts={setCounts} />}
+
+            {tab === "account" && (
+              <>
             <div className="rounded-2xl bg-muted p-4">
               <p className="text-xs text-muted-foreground">Saldo actual</p>
               <p className="text-3xl font-semibold">{formatTokens(d.user.tokens)} <span className="text-base font-normal text-muted-foreground">tokens</span></p>
@@ -315,6 +347,8 @@ function UserDialog({ id, onClose, onChanged }: { id: string | null; onClose: ()
                 ))}
               </ul>
             </section>
+              </>
+            )}
           </>
         )}
       </DialogContent>

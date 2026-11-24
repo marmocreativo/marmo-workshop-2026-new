@@ -12,7 +12,8 @@ const TYPES: Record<string, string> = {
 export const GET = handle(async (_req: Request, { params }: { params: Promise<{ name: string }> }) => {
   const user = await authed();
   const { name } = await params;
-  if (!name.startsWith(`${user.id}_`)) {
+  // El administrador puede ver los archivos de cualquier usuario (panel de usuarios).
+  if (!name.startsWith(`${user.id}_`) && user.role !== "admin") {
     const shared = await one(
       `SELECT 1 FROM generations
        WHERE (result_file=? AND is_public=1) OR (source_file=? AND source_public=1 AND source_deleted_at IS NULL)

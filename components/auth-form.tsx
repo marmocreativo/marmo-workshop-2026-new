@@ -9,6 +9,7 @@ import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordInput } from "@/components/password-input";
 import { api, jsonBody } from "@/lib/client";
 
 function GoogleIcon() {
@@ -79,11 +80,17 @@ export function AuthForm({ mode, google = false, error }: { mode: "login" | "reg
           <Input id="email" name="email" type="email" autoComplete="email" required className="h-11 text-base" />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="password">Contraseña</Label>
-          <Input
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Contraseña</Label>
+            {isLogin && (
+              <Link href="/recuperar" className="text-xs font-medium text-primary underline-offset-4 hover:underline">
+                ¿Olvidaste tu contraseña?
+              </Link>
+            )}
+          </div>
+          <PasswordInput
             id="password"
             name="password"
-            type="password"
             autoComplete={isLogin ? "current-password" : "new-password"}
             minLength={isLogin ? 1 : 8}
             required

@@ -35,6 +35,9 @@ CREATE TABLE IF NOT EXISTS plans(
 CREATE TABLE IF NOT EXISTS token_packs(
   id TEXT PRIMARY KEY, name TEXT NOT NULL, tokens INTEGER NOT NULL, price_cents INTEGER NOT NULL,
   active INTEGER NOT NULL DEFAULT 1, sort INTEGER NOT NULL DEFAULT 0);
+-- Enlaces de recuperación de contraseña (solo se guarda el hash del token; vencen en 1 hora).
+CREATE TABLE IF NOT EXISTS password_resets(
+  token_hash TEXT PRIMARY KEY, user_id TEXT NOT NULL, expires_at INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS model_tokens(
   model_id TEXT PRIMARY KEY, tokens_override INTEGER, enabled INTEGER NOT NULL DEFAULT 1);
@@ -79,7 +82,7 @@ const MIGRATIONS = [
   "ALTER TABLE presets ADD COLUMN instructions TEXT",
   "ALTER TABLE presets ADD COLUMN materials TEXT",
 ];
-const DB_VERSION = 14; // súbelo al agregar migraciones para que el servidor en caliente las aplique
+const DB_VERSION = 15; // súbelo al agregar migraciones para que el servidor en caliente las aplique
 
 const g = globalThis as unknown as { __db?: Client; __dbReady?: Promise<unknown>; __dbVer?: number };
 

@@ -12,6 +12,7 @@ import { ModelSelect } from "./model-select";
 import { RatioSelect } from "./ratio-select";
 import { CategoryIcon } from "./category-icon";
 import { ModifierEditor } from "./modifier-editor";
+import { useCompact } from "@/lib/use-compact";
 import type { StudioState } from "./use-studio";
 
 const ICON_BTN = "flex size-9 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur hover:bg-black/80";
@@ -46,6 +47,7 @@ function MaterialThumb({ file, onRemove }: { file: File; onRemove: () => void })
 type Pt = { x: number; y: number }; // fracciones del lienzo (0-1)
 
 export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.ReactNode }) {
+  const compact = useCompact();
   const top0 = corner ? TOP_WITH_CORNER : TOP;
   const boxRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false); // con un menú abierto, los controles suben por encima de los pointers
@@ -376,7 +378,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
               value={s.freeText}
               onChange={(e) => s.setFreeText(e.target.value)}
               maxLength={1000}
-              placeholder="Describe modificaciones extra…"
+              placeholder={compact ? "Prompt extra…" : "Describe modificaciones extra…"}
               aria-label="Prompt manual"
               className="h-11 min-w-0 flex-1 rounded-xl bg-white/10 px-3 text-sm text-white outline-none placeholder:text-white/50 hover:bg-white/15 focus-visible:ring-2 focus-visible:ring-primary"
             />
@@ -392,10 +394,10 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
                   : s.billing?.account.bypass
                     ? "Costo: 0 (modo desarrollo)"
                     : s.freeFirst
-                      ? "Gratis: tu primera generación del tutorial"
+                      ? compact ? "Gratis (tutorial)" : "Gratis: tu primera generación del tutorial"
                       : `Costo: ${s.tokenCost} tokens`}
               </span>
-              {s.billing && !s.billing.account.bypass && <span>Saldo: {s.billing.account.tokens}</span>}
+              {s.billing && !s.billing.account.bypass && <span>{compact ? "" : "Saldo: "}{s.billing.account.tokens}</span>}
               {!s.canAfford && (
                 <Link href="/cuenta" className="rounded-full bg-primary px-2.5 py-0.5 font-medium text-primary-foreground">
                   Recargar
@@ -407,9 +409,9 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
               {!s.canAfford
                   ? "Tokens insuficientes"
                   : s.image && !s.hasInput
-                    ? "Elige un modificador o escribe un prompt"
+                    ? compact ? "Elige un modificador" : "Elige un modificador o escribe un prompt"
                     : s.busy
-                      ? `Procesar otra (${s.pending} en proceso)`
+                      ? compact ? `Procesar (${s.pending}…)` : `Procesar otra (${s.pending} en proceso)`
                       : "Procesar"}
             </Button>
           </div>
