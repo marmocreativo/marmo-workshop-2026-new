@@ -81,8 +81,10 @@ const MIGRATIONS = [
   "CREATE UNIQUE INDEX IF NOT EXISTS idx_users_google ON users(google_sub)",
   "ALTER TABLE presets ADD COLUMN instructions TEXT",
   "ALTER TABLE presets ADD COLUMN materials TEXT",
+  "ALTER TABLE users ADD COLUMN name TEXT",
+  "ALTER TABLE users ADD COLUMN phone TEXT",
 ];
-const DB_VERSION = 15; // súbelo al agregar migraciones para que el servidor en caliente las aplique
+const DB_VERSION = 16; // súbelo al agregar migraciones para que el servidor en caliente las aplique
 
 const g = globalThis as unknown as { __db?: Client; __dbReady?: Promise<unknown>; __dbVer?: number };
 

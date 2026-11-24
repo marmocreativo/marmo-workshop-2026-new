@@ -44,7 +44,8 @@ const LEDGER_LABEL: Record<string, string> = {
 
 const ACTIVE = ["active", "trialing", "past_due"];
 
-export function BillingPanel({ justPaid }: { justPaid: boolean }) {
+// view: "subscription" = saldo, planes y recargas · "history" = facturas, costos y movimientos.
+export function BillingPanel({ justPaid, view }: { justPaid: boolean; view: "subscription" | "history" }) {
   const [me, setMe] = useState<BillingMe | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const startTokens = useRef<number | null>(null);
@@ -123,6 +124,8 @@ export function BillingPanel({ justPaid }: { justPaid: boolean }) {
         </p>
       )}
 
+      {view === "subscription" && (
+        <>
       {/* Saldo */}
       <section className="rounded-3xl bg-primary p-6 text-primary-foreground">
         <p className="flex items-center gap-2 text-sm opacity-80">
@@ -146,16 +149,6 @@ export function BillingPanel({ justPaid }: { justPaid: boolean }) {
             <span className="opacity-90">Sin suscripción activa</span>
           )}
         </div>
-        {account.has_customer && (
-          <Button
-            variant="secondary"
-            className="mt-4 h-10 rounded-full bg-background text-foreground hover:bg-background/90"
-            disabled={busy === "portal"}
-            onClick={() => go("portal", "/api/stripe/portal")}
-          >
-            {busy === "portal" && <Loader2 className="animate-spin" />} Administrar suscripción y facturas
-          </Button>
-        )}
       </section>
 
       {/* Planes */}
@@ -237,6 +230,26 @@ export function BillingPanel({ justPaid }: { justPaid: boolean }) {
         </div>
       </section>
 
+        </>
+      )}
+
+      {view === "history" && (
+        <>
+      {/* Facturas */}
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Facturas y método de pago</h2>
+        <p className="text-sm text-muted-foreground">
+          {account.has_customer
+            ? "Descarga tus facturas, actualiza tu tarjeta o cancela tu suscripción desde el portal seguro de Stripe."
+            : "Aún no tienes compras. Cuando hagas una, aquí podrás ver tus facturas y administrar tu tarjeta."}
+        </p>
+        {account.has_customer && (
+          <Button variant="outline" className="h-10 rounded-full" disabled={busy === "portal"} onClick={() => go("portal", "/api/stripe/portal")}>
+            {busy === "portal" && <Loader2 className="animate-spin" />} Abrir facturas y suscripción
+          </Button>
+        )}
+      </section>
+
       {/* Costos */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">¿Cuánto cuesta cada cosa?</h2>
@@ -284,6 +297,8 @@ export function BillingPanel({ justPaid }: { justPaid: boolean }) {
           ))}
         </ul>
       </section>
+        </>
+      )}
     </div>
   );
 }
