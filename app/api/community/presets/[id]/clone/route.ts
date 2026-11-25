@@ -1,4 +1,6 @@
 import { HttpError, authed, handle } from "@/lib/api";
+import { parseRoleMap } from "@/lib/material-roles";
+import { presetMode } from "@/lib/modes";
 import { one, query, run, uid } from "@/lib/db";
 import { readStored, saveFile } from "@/lib/storage";
 
@@ -6,8 +8,8 @@ import { readStored, saveFile } from "@/lib/storage";
 export const POST = handle(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
   const user = await authed();
   const { id } = await params;
-  const src = await one<{ name: string; free_text: string | null; instructions: string | null; materials: string | null; ref_file: string | null; modifier_ids: string }>(
-    "SELECT name,free_text,instructions,materials,ref_file,modifier_ids FROM presets WHERE id=? AND is_public=1 AND user_id<>?",
+  const src = await one<{ name: string; free_text: string | null; instructions: string | null; materials: string | null; material_roles: string | null; mode: string | null; ref_file: string | null; modifier_ids: string }>(
+    "SELECT name,free_text,instructions,materials,material_roles,mode,ref_file,modifier_ids FROM presets WHERE id=? AND is_public=1 AND user_id<>?",
     [id, user.id],
   );
   if (!src) throw new HttpError(404, "Preset no disponible");
@@ -54,21 +56,27 @@ export const POST = handle(async (_req: Request, { params }: { params: Promise<{
     }
   }
   const mats: string[] = [];
+  const srcRoles = parseRoleMap(src.material_roles);
+  const roles: Record<string, string[]> = {};
   for (const f of src.materials ? (JSON.parse(src.materials) as string[]) : []) {
     try {
-      mats.push(await saveFile(user.id, await readStored(f), f.endsWith(".png") ? "png" : "jpg"));
+      const copy = await saveFile(user.id, await readStored(f), f.endsWith(".png") ? "png" : "jpg");
+      mats.push(copy);
+      if (srcRoles[f]?.length) roles[copy] = srcRoles[f];
     } catch {}
   }
   const presetId = uid();
-  await run("INSERT INTO presets(id,user_id,name,free_text,instructions,materials,ref_file,modifier_ids,is_public,created_at) VALUES(?,?,?,?,?,?,?,?,0,?)", [
+  await run("INSERT INTO presets(id,user_id,name,free_text,instructions,materials,material_roles,ref_file,modifier_ids,mode,is_public,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,0,?)", [
     presetId,
     user.id,
     src.name,
     src.free_text,
     src.instructions,
     mats.length ? JSON.stringify(mats) : null,
+    Object.keys(roles).length ? JSON.stringify(roles) : null,
     cover,
     JSON.stringify(newIds),
+    presetMode(src.mode),
     Date.now(),
   ]);
   return Response.json({ id: presetId });

@@ -83,8 +83,16 @@ const MIGRATIONS = [
   "ALTER TABLE presets ADD COLUMN materials TEXT",
   "ALTER TABLE users ADD COLUMN name TEXT",
   "ALTER TABLE users ADD COLUMN phone TEXT",
+  // Modo del Studio al que pertenece el preset (los anteriores son del Estudio Pro).
+  "ALTER TABLE presets ADD COLUMN mode TEXT NOT NULL DEFAULT 'pro'",
+  "ALTER TABLE generations ADD COLUMN mode TEXT",
+  // Estudio Pro: qué categorías se toman de cada material ({archivo: [slugs]}).
+  "ALTER TABLE presets ADD COLUMN material_roles TEXT",
+  "ALTER TABLE presets ADD COLUMN favorite INTEGER NOT NULL DEFAULT 0",
+  // Preset con el que se hizo la generación (para mostrar sus resultados en la tarjeta).
+  "ALTER TABLE generations ADD COLUMN preset_id TEXT",
 ];
-const DB_VERSION = 16; // súbelo al agregar migraciones para que el servidor en caliente las aplique
+const DB_VERSION = 19; // súbelo al agregar migraciones para que el servidor en caliente las aplique
 
 const g = globalThis as unknown as { __db?: Client; __dbReady?: Promise<unknown>; __dbVer?: number };
 

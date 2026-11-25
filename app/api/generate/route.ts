@@ -4,6 +4,8 @@ import { billingBypass } from "@/lib/auth";
 import { firstGenerationFree, getPricing, refundUsage, spendTokens } from "@/lib/billing";
 import { batch, query, run, uid } from "@/lib/db";
 import { extractResultUrl, getModel, resolveRatio } from "@/lib/models";
+import { getMode, isMode } from "@/lib/modes";
+import { parseRoleList } from "@/lib/material-roles";
 import { buildPrompt } from "@/lib/prompt";
 import { saveDeduped } from "@/lib/files";
 import { FREE_FIRST_MAX_TOKENS, tokensFor } from "@/lib/tokens";
@@ -21,6 +23,10 @@ export const POST = handle(async (req: Request) => {
   const model = getModel(String(form.get("model") ?? ""));
   if (!model) throw new HttpError(400, "Modelo no válido");
   const freeText = String(form.get("freeText") ?? "").slice(0, 1000);
+  const rawMode = form.get("mode");
+  const rawPreset = String(form.get("presetId") ?? "");
+  const presetId = rawPreset && (await query("SELECT 1 FROM presets WHERE id=? AND user_id=?", [rawPreset, user.id])).length ? rawPreset : null;
+  const mode = getMode(isMode(rawMode) ? rawMode : "pro");
   let modifierIds: string[] = [];
   try {
     modifierIds = JSON.parse(String(form.get("modifierIds") ?? "[]"));
@@ -41,15 +47,26 @@ export const POST = handle(async (req: Request) => {
   const materials = form
     .getAll("materials")
     .filter((f): f is File => f instanceof File && f.size > 0)
-    .slice(0, model.maxMaterials);
+    .slice(0, mode.materials ? model.maxMaterials : 0);
   for (const f of materials) {
     if (!f.type.startsWith("image/")) throw new HttpError(400, "Los materiales deben ser imágenes");
     if (f.size > 8 * 1024 * 1024) throw new HttpError(413, "Un material es muy pesado");
   }
 
-  const ratio = resolveRatio(model, String(form.get("aspectRatio") ?? "auto"));
+  // Estudio Pro: qué categorías tomar de cada material (slugs → nombres de las categorías del usuario).
+  const roleSlugs = mode.id === "pro" ? parseRoleList(form.get("materialRoles"), materials.length) : [];
+  const usedSlugs = [...new Set(roleSlugs.flat())];
+  const cats = usedSlugs.length
+    ? await query<{ slug: string; name: string }>(
+        `SELECT slug,name FROM categories WHERE user_id=? AND slug IN (${usedSlugs.map(() => "?").join(",")})`,
+        [user.id, ...usedSlugs],
+      )
+    : [];
+  const roles = roleSlugs.map((r) => r.map((sl) => cats.find((c) => c.slug === sl)?.name).filter((x): x is string => !!x));
+
+  const ratio = resolveRatio(model, mode.ratio ? String(form.get("aspectRatio") ?? "auto") : "auto");
   const cost = model.cost(ratio).usd;
-  const prompt = buildPrompt(mods, freeText, model.kind, materials.length);
+  const prompt = buildPrompt(mods, freeText, model.kind, materials.length, mode.id, roles);
 
   // Cobro de tokens antes de gastar en el proveedor; si algo falla después, se devuelven.
   const tokens = tokensFor(model, ratio, await getPricing());
@@ -71,9 +88,9 @@ export const POST = handle(async (req: Request) => {
     // Misma imagen que ya usó antes: se reutiliza el archivo (no se duplica en disco ni en la biblioteca).
     const sourceFile = await saveDeduped(user.id, sourceBuf, image.type === "image/png" ? "png" : "jpg");
     await run(
-      `INSERT INTO generations(id,user_id,model,kind,free_text,prompt,source_file,aspect_ratio,cost_usd,tokens_spent,status,created_at)
-       VALUES(?,?,?,?,?,?,?,?,?,?,?,?)`,
-      [id, user.id, model.id, model.kind, freeText || null, prompt, sourceFile, ratio, cost, charged, "processing", Date.now()],
+      `INSERT INTO generations(id,user_id,model,kind,free_text,prompt,source_file,aspect_ratio,cost_usd,tokens_spent,status,mode,preset_id,created_at)
+       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      [id, user.id, model.id, model.kind, freeText || null, prompt, sourceFile, ratio, cost, charged, "processing", mode.id, presetId, Date.now()],
     );
   } catch (e) {
     await refund("Reembolso: no se pudo iniciar la generación");

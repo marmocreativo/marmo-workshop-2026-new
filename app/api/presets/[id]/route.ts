@@ -9,6 +9,8 @@ const patch = z.object({
   freeText: z.string().trim().max(1000).optional(),
   instructions: z.string().trim().max(1000).optional(),
   modifierIds: z.array(z.string()).max(60).optional(),
+  mode: z.enum(["filtro", "ocio", "producto", "pro"]).optional(),
+  favorite: z.boolean().optional(),
 });
 
 // JSON (nombre / público) o multipart (edición completa: nombre, texto, modificadores y portada).
@@ -41,6 +43,7 @@ export const PATCH = handle(async (req: Request, { params }: { params: Promise<{
       name: form.get("name") ?? undefined,
       freeText: form.has("freeText") ? String(form.get("freeText")) : undefined,
       instructions: form.has("instructions") ? String(form.get("instructions")) : undefined,
+      mode: form.get("mode") ?? undefined,
       modifierIds: ids,
     };
     const img = form.get("image");
@@ -62,6 +65,8 @@ export const PATCH = handle(async (req: Request, { params }: { params: Promise<{
 
   if (body.isPublic !== undefined) await run("UPDATE presets SET is_public=? WHERE id=? AND user_id=?", [+body.isPublic, id, user.id]);
   if (body.instructions !== undefined) await run("UPDATE presets SET instructions=? WHERE id=? AND user_id=?", [body.instructions || null, id, user.id]);
+  if (body.favorite !== undefined) await run("UPDATE presets SET favorite=? WHERE id=? AND user_id=?", [+body.favorite, id, user.id]);
+  if (body.mode) await run("UPDATE presets SET mode=? WHERE id=? AND user_id=?", [body.mode, id, user.id]);
   if (body.name) await run("UPDATE presets SET name=? WHERE id=? AND user_id=?", [body.name, id, user.id]);
 
   if (body.modifierIds !== undefined || body.freeText !== undefined) {

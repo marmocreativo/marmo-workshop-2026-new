@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { Images, Layers } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetTitle } from "@/components/ui/sheet";
+import { useBackClose } from "@/lib/use-back-close";
 import { cn } from "@/lib/utils";
 import { GalleryPanel } from "./gallery-panel";
 import { GenerationLightbox } from "./generation-lightbox";
 import { LibraryPanel } from "./library-panel";
+import { ModeSwitcher } from "./mode-switcher";
 import { StudioCanvas } from "./studio-canvas";
 import type { StudioState } from "./use-studio";
 
@@ -14,13 +16,18 @@ import type { StudioState } from "./use-studio";
 export function StudioMobile({ s }: { s: StudioState }) {
   const [libOpen, setLibOpen] = useState(false);
   const [galOpen, setGalOpen] = useState(false);
+  // El botón atrás del celular cierra la biblioteca o la galería en lugar de salir del Studio.
+  useBackClose(libOpen, () => setLibOpen(false));
+  useBackClose(galOpen, () => setGalOpen(false));
   // Hay foto pero ningún modificador: el botón de la biblioteca pulsa para guiar al usuario.
   const needsMods = !!s.image && !s.hasInput;
 
   const fab = "flex size-11 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur hover:bg-black/80";
 
   return (
-    <div className="h-[calc(100dvh-8.75rem)]">
+    <div className="flex h-[calc(100dvh-8.75rem)] flex-col gap-2">
+      <ModeSwitcher s={s} />
+      <div className="min-h-0 flex-1">
       <StudioCanvas
         s={s}
         corner={
@@ -50,6 +57,7 @@ export function StudioMobile({ s }: { s: StudioState }) {
           </>
         }
       />
+      </div>
 
       <Sheet open={libOpen} onOpenChange={setLibOpen}>
         <SheetContent side="left" className="gap-0 p-4 data-[side=left]:w-[92%] data-[side=left]:sm:max-w-md">
@@ -75,7 +83,7 @@ export function StudioMobile({ s }: { s: StudioState }) {
         onReuse={s.reuse}
         onSavePreset={(g, name) => s.savePresetFromGeneration(g.id, name)}
         onVisibility={s.setVisibility}
-        banner={s.tour.step === "result" ? "¡Este es tu resultado! Míralo en grande. Ciérralo cuando quieras para continuar con el tutorial." : undefined}
+        banner={s.tour.step === "result" ? "¡Tu resultado! Ciérralo para seguir." : undefined}
       />
     </div>
   );

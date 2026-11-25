@@ -5,6 +5,7 @@ import { instructionsPopup, noTokensPopup, toast } from "@/lib/alerts";
 import { api, fileUrl, jsonBody, resizeImage } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { MODELS, getModel, resolveRatio } from "@/lib/models";
+import { DEFAULT_MODE, allowsCategory, getMode, isMode, type StudioMode } from "@/lib/modes";
 import { FREE_FIRST_MAX_TOKENS, tokensFor } from "@/lib/tokens";
 import type { CommunityPreset, Generation, Modifier, Preset } from "@/lib/types";
 import type { BillingMe } from "./billing-panel";
@@ -20,16 +21,32 @@ export type TourStep = "intro" | "photo" | "preset" | "process" | "wait" | "resu
 
 export function useStudio(initialRef?: string, onboarding = false, initialPreset?: string) {
   const library = useLibrary();
+  // Modo del Studio (Ocio, Filtro, Producto, Estudio Pro). El tutorial corre en Filtro; si no, se recuerda el último.
+  // El tutorial corre en Filtro (el cambio más fácil de entender: tu misma foto, mejorada).
+  const [mode, setModeRaw] = useState<StudioMode>(onboarding ? "filtro" : DEFAULT_MODE);
+  useEffect(() => {
+    if (onboarding) return;
+    try {
+      const saved = localStorage.getItem("mw:mode");
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (isMode(saved)) setModeRaw(saved);
+    } catch {}
+  }, [onboarding]);
+  const modeDef = getMode(mode);
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [freeText, setFreeText] = useState("");
+  // Preset aplicado ahora (se marca en su tarjeta y se liga a las generaciones para mostrar sus resultados).
+  const [appliedPresetId, setAppliedPresetId] = useState<string | null>(null);
   // Materiales: imágenes extra (logos, ropa, fondos...) que se mandan junto a la foto de referencia.
   const [materials, setMaterials] = useState<File[]>([]);
+  // Estudio Pro: categorías (slugs) que se toman de cada material; [] = material libre. Va alineado con `materials`.
+  const [materialRoles, setRoles] = useState<string[][]>([]);
   const [model, setModel] = useState(MODELS[0].id);
   const [ratioChoice, setRatio] = useState("auto");
   // Si el modelo elegido no soporta la proporción, se usa "auto".
-  const ratio = resolveRatio(getModel(model) ?? MODELS[0], ratioChoice);
+  const ratio = modeDef.ratio ? resolveRatio(getModel(model) ?? MODELS[0], ratioChoice) : "auto";
   const router = useRouter();
   const [billing, setBilling] = useState<BillingMe | null>(null);
   const warnedRef = useRef(false);
@@ -128,7 +145,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     [library],
   );
 
-  const maxMaterials = (getModel(model) ?? MODELS[0]).maxMaterials;
+  const maxMaterials = modeDef.materials ? (getModel(model) ?? MODELS[0]).maxMaterials : 0;
   const addMaterials = useCallback(
     async (files: File[]) => {
       const imgs = files.filter((f) => f.type.startsWith("image/"));
@@ -137,12 +154,89 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
       if (imgs.length > room) toast.message(`Este modelo admite hasta ${maxMaterials} materiales`);
       const small = await Promise.all(imgs.slice(0, room).map((f) => resizeImage(f, 1280).catch(() => f)));
       setMaterials((m) => [...m, ...small].slice(0, maxMaterials));
+      setRoles((r) => [...r, ...small.map(() => [] as string[])].slice(0, maxMaterials));
     },
     [maxMaterials, materials.length],
   );
-  const removeMaterial = useCallback((i: number) => setMaterials((m) => m.filter((_, k) => k !== i)), []);
+  const removeMaterial = useCallback((i: number) => {
+    setMaterials((m) => m.filter((_, k) => k !== i));
+    setRoles((r) => r.filter((_, k) => k !== i));
+  }, []);
+  const setMaterialRoles = useCallback((i: number, slugs: string[]) => setRoles((r) => r.map((x, k) => (k === i ? slugs : x))), []);
 
-  const clearSelected = useCallback(() => setSelected(new Set()), []);
+  const clearSelected = useCallback(() => {
+    setSelected(new Set());
+    setAppliedPresetId(null);
+  }, []);
+
+  // Lo que muestra la biblioteca en el modo actual: categorías permitidas, sus modificadores y los presets del modo.
+  const modeCategories = useMemo(() => library.categories.filter((c) => allowsCategory(modeDef, c.slug)), [library.categories, modeDef]);
+  const modeModifiers = useMemo(() => {
+    const ok = new Set(modeCategories.map((c) => c.id));
+    return library.modifiers.filter((m) => ok.has(m.category_id));
+  }, [library.modifiers, modeCategories]);
+  const modePresets = useMemo(
+    () => library.presets.filter((p) => p.mode === mode).sort((a, b) => b.favorite - a.favorite || b.created_at - a.created_at),
+    [library.presets, mode],
+  );
+
+  // Resultados de cada preset: generaciones ligadas a él o, para las anteriores, con sus mismos modificadores y texto.
+  const presetResults = useMemo(() => {
+    const out: Record<string, string[]> = {};
+    for (const p of library.presets) {
+      const key = [...p.modifier_ids].sort().join(",");
+      out[p.id] = gens
+        .filter(
+          (g) =>
+            g.result_file &&
+            g.kind === "image" &&
+            (g.preset_id === p.id ||
+              (!g.preset_id && key && g.modifiers.map((m) => m.modifier_id).sort().join(",") === key && (g.free_text ?? "") === (p.free_text ?? ""))),
+        )
+        .slice(0, 8)
+        .map((g) => g.result_file!);
+    }
+    return out;
+  }, [library.presets, gens]);
+
+  // Favoritos: aparecen primero en su lista.
+  async function toggleModifierFavorite(m: Modifier) {
+    const next = m.favorite ? 0 : 1;
+    library.setModifiers(library.modifiers.map((x) => (x.id === m.id ? { ...x, favorite: next } : x)));
+    try {
+      await api(`/api/modifiers/${m.id}`, { method: "PATCH", body: jsonBody({ favorite: !!next }) });
+    } catch (e) {
+      toast.error((e as Error).message);
+      library.refresh().catch(() => {});
+    }
+  }
+  async function togglePresetFavorite(p: Preset) {
+    try {
+      await api(`/api/presets/${p.id}`, { method: "PATCH", body: jsonBody({ favorite: !p.favorite }) });
+      await library.refresh();
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }
+
+  // Cambiar de modo quita lo que ese modo no admite (modificadores de otras categorías, materiales).
+  const setMode = useCallback(
+    (m: StudioMode) => {
+      setModeRaw(m);
+      try {
+        localStorage.setItem("mw:mode", m);
+      } catch {}
+      const def = getMode(m);
+      const ok = new Set(library.categories.filter((c) => allowsCategory(def, c.slug)).map((c) => c.id));
+      const catOf = new Map(library.modifiers.map((x) => [x.id, x.category_id]));
+      setSelected((s) => new Set([...s].filter((id) => ok.has(catOf.get(id) ?? ""))));
+      if (!def.materials) {
+        setMaterials([]);
+        setRoles([]);
+      }
+    },
+    [library.categories, library.modifiers],
+  );
 
   // Basta con un modificador o con texto en el prompt manual.
   const hasInput = selected.size > 0 || freeText.trim().length > 0;
@@ -200,6 +294,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     if (!image) return toast.error("Primero agrega una foto");
     if (!hasInput) return toast.error("Elige un modificador o escribe el prompt manual");
     if (!canAfford) return outOfTokens();
+    if (tourOn && tourPhase === "edit") setTourPhase("final"); // en el paso "Ajusta y repite", procesar lo completa
     setPending((n) => n + 1);
     // El servidor cobra al recibir la petición: se refleja de inmediato y luego se reconcilia con el saldo real.
     if (billing && !billing.account.bypass && !freeFirst && tokenCost) emitBalance(Math.max(0, balRef.current - tokenCost));
@@ -208,9 +303,12 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
       form.set("image", await resizeImage(image));
       form.set("model", model);
       form.set("aspectRatio", ratio);
+      form.set("mode", mode);
+      if (appliedPresetId) form.set("presetId", appliedPresetId);
       form.set("freeText", freeText);
       form.set("modifierIds", jsonBody([...selected]));
       for (const m of materials.slice(0, maxMaterials)) form.append("materials", m);
+      form.set("materialRoles", jsonBody(materialRoles.slice(0, maxMaterials)));
       const out = await api<GenerateResult>("/api/generate", { method: "POST", body: form });
       setResult(out);
       await Promise.all([loadGens(), library.refresh()]).catch(() => {});
@@ -288,7 +386,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
 
   // Presets: solo modificadores + texto extra (la imagen es una portada y no se carga como foto).
   // Carga los materiales guardados del preset (son editables: se pueden quitar o agregar otros).
-  async function loadPresetMaterials(files: string[]) {
+  async function loadPresetMaterials(files: string[], roles: Record<string, string[]> = {}) {
     try {
       const loaded = await Promise.all(
         files.map(async (name) => {
@@ -297,6 +395,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
         }),
       );
       setMaterials(loaded.slice(0, 3));
+      setRoles(files.slice(0, 3).map((f) => roles[f] ?? []));
     } catch {
       toast.error("No pude cargar los materiales del preset");
     }
@@ -304,10 +403,12 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
 
   function applyPreset(p: Preset) {
     setMaterials([]);
-    if (p.materials?.length) loadPresetMaterials(p.materials);
+    setRoles([]);
+    if (p.materials?.length) loadPresetMaterials(p.materials, p.material_roles);
     const alive = new Set(library.modifiers.map((m) => m.id));
     const ids = p.modifier_ids.filter((id) => alive.has(id));
     setSelected(new Set(ids));
+    setAppliedPresetId(p.id);
     setFreeText(p.free_text ?? "");
     if (ids.length < p.modifier_ids.length) toast.message("Algunos modificadores del preset ya no existen");
     if (p.instructions) instructionsPopup(p.name, p.instructions);
@@ -320,17 +421,61 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     form.set("freeText", freeText);
     form.set("modifierIds", jsonBody([...selected]));
     form.set("instructions", instructions);
+    form.set("mode", mode);
     for (const m of materials.slice(0, 3)) form.append("materials", m);
+    form.set("materialRoles", jsonBody(materialRoles.slice(0, 3)));
     if (withImage && image) form.set("image", await resizeImage(image, 640));
     await api("/api/presets", { method: "POST", body: form });
     await library.refresh();
     toast.success("Preset guardado");
   }
 
+  // "Copiar desde imagen": analiza una foto con el enfoque del modo actual y crea un preset con sus modificadores.
+  async function presetFromImage(file: File) {
+    try {
+      const small = await resizeImage(file, 1280);
+      const form = new FormData();
+      form.set("image", small);
+      form.set("mode", mode);
+      const an = await api<{ suggestions: { categoryId: string; text: string }[]; name: string }>("/api/analyze", { method: "POST", body: form });
+      requestBalanceRefresh(); // el análisis cuesta tokens
+      if (!an.suggestions.length) return toast.message("No encontré nada que copiar de esa imagen");
+
+      // La foto queda como origen de los modificadores y como portada del preset.
+      const of = new FormData();
+      of.set("image", small);
+      const { originFile } = await api<{ originFile: string }>("/api/modifiers/origin", { method: "POST", body: of });
+      const { modifiers: created } = await api<{ modifiers: Modifier[] }>("/api/modifiers", {
+        method: "POST",
+        body: jsonBody({ items: an.suggestions.map((x) => ({ ...x, originFile })) }),
+      });
+
+      const pf = new FormData();
+      pf.set("name", an.name || `${modeDef.label} desde imagen`);
+      pf.set("modifierIds", jsonBody(created.map((m) => m.id)));
+      pf.set("mode", mode);
+      pf.set("image", await resizeImage(file, 640));
+      const { preset } = await api<{ preset: Preset }>("/api/presets", { method: "POST", body: pf });
+      await library.refresh();
+
+      // Se aplica de inmediato.
+      setSelected(new Set(created.map((m) => m.id)));
+      setAppliedPresetId(preset.id);
+      setFreeText("");
+      setMaterials([]);
+      setRoles([]);
+      toast.success(`Preset "${preset.name}" creado y aplicado`);
+    } catch (e) {
+      toast.error((e as Error).message);
+      requestBalanceRefresh();
+    }
+  }
+
   async function savePresetFromGeneration(generationId: string, name: string) {
     const form = new FormData();
     form.set("name", name);
     form.set("generationId", generationId);
+    form.set("mode", mode);
     await api("/api/presets", { method: "POST", body: form });
     await library.refresh();
     toast.success("Preset guardado");
@@ -362,9 +507,11 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
       if (!fresh) return;
       const alive = new Set(m.modifiers.map((x) => x.id));
       setSelected(new Set(fresh.modifier_ids.filter((x) => alive.has(x))));
+      setAppliedPresetId(fresh.id);
       setFreeText(fresh.free_text ?? "");
       setMaterials([]);
-      if (fresh.materials.length) loadPresetMaterials(fresh.materials);
+      setRoles([]);
+      if (fresh.materials.length) loadPresetMaterials(fresh.materials, fresh.material_roles);
       if (fresh.instructions) instructionsPopup(fresh.name, fresh.instructions);
       else toast.success(`Preset "${fresh.name}" aplicado`);
     } catch (e) {
@@ -418,6 +565,16 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
 
   return {
     ...library,
+    mode,
+    setMode,
+    modeDef,
+    modeCategories,
+    modeModifiers,
+    modePresets,
+    presetResults,
+    appliedPresetId,
+    toggleModifierFavorite,
+    togglePresetFavorite,
     tour,
     image,
     setImage,
@@ -431,6 +588,8 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     freeText,
     setFreeText,
     materials,
+    materialRoles,
+    setMaterialRoles,
     maxMaterials,
     addMaterials,
     removeMaterial,
@@ -460,6 +619,7 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     applyCommunityPreset,
     savePreset,
     savePresetFromGeneration,
+    presetFromImage,
     deletePreset,
     setPresetPublic,
     hasInput,

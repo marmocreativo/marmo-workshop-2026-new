@@ -4,6 +4,7 @@ import { HttpError, authed, handle } from "@/lib/api";
 import { billingBypass } from "@/lib/auth";
 import { getPricing, refundUsage, spendTokens } from "@/lib/billing";
 import { query, uid } from "@/lib/db";
+import { allowsCategory, getMode, isMode, type StudioMode } from "@/lib/modes";
 import type { Category } from "@/lib/types";
 
 export const maxDuration = 60;
@@ -21,7 +22,21 @@ const TONES: Record<string, string> = {
   outfit: MODA,
 };
 
-const outSchema = z.array(z.object({ category: z.string(), text: z.string() }));
+// Enfoque del análisis según el modo del Studio: qué se extrae de la imagen y para qué se va a reutilizar.
+const FOCUS: Record<StudioMode, string> = {
+  filtro:
+    "OBJETIVO: copiar el LOOK de esta foto como un filtro que se aplicará a OTRA foto sin cambiar su contenido. Describe solo cómo se ve, no qué hay: calidad, dirección y color de la luz; efectos de lente (desenfoque, bokeh, destellos, viñeta, aberración); tratamiento del fondo como ambiente (color, desenfoque, atmósfera), nunca objetos concretos; y postproducción (gradación de color, contraste, curva tonal, grano, tono de piel). NO describas personas, ropa, pose, encuadre ni objetos.",
+  producto:
+    "OBJETIVO: copiar la PUESTA EN ESCENA de esta fotografía de producto para aplicarla a OTRO producto. Describe la iluminación de estudio, el fondo, la superficie, los props y elementos de ambientación, el encuadre y ángulo, la lente y la postproducción. NO describas el producto en sí (su forma, marca, etiqueta, texto ni colores propios): solo el entorno y cómo está fotografiado.",
+  ocio:
+    "OBJETIVO: capturar el CONCEPTO divertido de esta imagen para recrearlo con otras personas o mascotas. Prioriza la idea y la escena: tipo de imagen o estilo (revista, póster de película, ilustración, figura de juguete…), escenario, acción o pose, vestuario y accesorios característicos, y el ambiente. Sé creativo y evocador; el resultado puede cambiar por completo la foto original.",
+  pro:
+    "OBJETIVO: descomponer la imagen en modificadores técnicos y precisos de todas las categorías, para combinarlos y mezclarlos con control total. Sé detallado y profesional en cada elemento.",
+};
+
+const itemSchema = z.object({ category: z.string(), text: z.string() });
+// Respuesta: {name, items} (nombre sugerido para un preset) o, por compatibilidad, solo el arreglo.
+const outSchema = z.union([z.object({ name: z.string().optional(), items: z.array(itemSchema) }), z.array(itemSchema)]);
 
 // Analiza una imagen con Gemini y devuelve modificadores sugeridos por categoría.
 export const POST = handle(async (req: Request) => {
@@ -30,6 +45,8 @@ export const POST = handle(async (req: Request) => {
 
   const form = await req.formData();
   const file = form.get("image");
+  const rawMode = form.get("mode");
+  const mode = getMode(isMode(rawMode) ? rawMode : "pro");
   if (!(file instanceof File)) throw new HttpError(400, "Falta la imagen");
   if (file.size > 12 * 1024 * 1024) throw new HttpError(413, "La imagen es muy pesada (máx. 12 MB)");
 
@@ -49,9 +66,10 @@ export const POST = handle(async (req: Request) => {
   }
 
   async function analyze(file: File) {
-  const categories = await query<Category>("SELECT id,slug,name,sort FROM categories WHERE user_id=? ORDER BY sort", [
-    user.id,
-  ]);
+  // Solo las categorías que usa el modo (p. ej. Filtro no analiza ropa ni pose).
+  const categories = (await query<Category>("SELECT id,slug,name,sort FROM categories WHERE user_id=? ORDER BY sort", [user.id])).filter((c) =>
+    allowsCategory(mode, c.slug),
+  );
   const catList = categories.map((c) => `- ${c.slug}: ${c.name}`).join("\n");
   const toneList = categories
     .filter((c) => TONES[c.slug])
@@ -62,11 +80,12 @@ export const POST = handle(async (req: Request) => {
 Categorías disponibles (usa exactamente el slug):
 ${catList}
 
+${FOCUS[mode.id]}
+
 Reglas:
-- Devuelve un arreglo JSON de objetos {"category": "<slug>", "text": "<descripción>"}.
+- Devuelve un objeto JSON {"name": "<nombre corto y atractivo para un preset con este estilo, 2 a 4 palabras en español>", "items": [{"category": "<slug>", "text": "<descripción>"}]}.
 - Una descripción por categoría que aplique a la imagen; omite las que no se vean.
 - Cada texto en español, concreto y visual (40 palabras máximo), usable como instrucción de edición. Usa terminología profesional, no descripciones genéricas.
-- Describe ropa, cabello, accesorios, iluminación, pose, encuadre, lente, estilo y postproducción.
 - NO describas la identidad, nombre ni rasgos faciales de las personas.
 ${toneList ? `\nRegistro de redacción por categoría (cada una tiene su propio tono; en las demás usa un lenguaje visual claro y concreto):\n${toneList}` : ""}`;
 
@@ -93,9 +112,11 @@ ${toneList ? `\nRegistro de redacción por categoría (cada una tiene su propio 
   }
 
   const bySlug = new Map(categories.map((c) => [c.slug, c]));
-  const suggestions = parsed
+  const items = Array.isArray(parsed) ? parsed : parsed.items;
+  const name = Array.isArray(parsed) ? "" : (parsed.name ?? "").trim().slice(0, 60);
+  const suggestions = items
     .filter((s) => bySlug.has(s.category) && s.text.trim())
     .map((s) => ({ categoryId: bySlug.get(s.category)!.id, text: s.text.trim() }));
-  return Response.json({ suggestions, tokensSpent: charged });
+  return Response.json({ suggestions, name, mode: mode.id, tokensSpent: charged });
   }
 });

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Bookmark, PenLine, ScanLine, Trash2, Undo2, X } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Bookmark, Loader2, PenLine, ScanLine, Trash2, Undo2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { api, fileUrl } from "@/lib/client";
 import type { CommunityPreset } from "@/lib/types";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { ModifierEditor } from "./modifier-editor";
 import { ModifierBrowser } from "./modifier-picker";
 import { CommunityPresetCards, PresetCards, PresetSaveDialog } from "./preset-cards";
+import { PresetTransfer } from "./preset-transfer";
 import type { StudioState } from "./use-studio";
 
 type Tab = "mods" | "presets" | "images";
@@ -20,7 +21,10 @@ const TABS: [Tab, string][] = [
 
 // Biblioteca del Studio: modificadores, presets e imágenes usadas. Va en una columna (escritorio) o en un drawer (móvil).
 export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClose?: () => void; className?: string }) {
-  const [tab, setTab] = useState<Tab>("presets");
+  const [tabRaw, setTab] = useState<Tab>("presets");
+  // Filtro, Producto y Ocio solo usan presets: la pestaña de modificadores es del Estudio Pro.
+  const tabs = s.mode === "pro" ? TABS : TABS.filter(([k]) => k !== "mods");
+  const tab: Tab = tabs.some(([k]) => k === tabRaw) ? tabRaw : "presets";
   const [editorOpen, setEditorOpen] = useState(false);
   const [editorMode, setEditorMode] = useState<"write" | "analyze">("write");
   const openEditor = (m: "write" | "analyze") => {
@@ -28,16 +32,19 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
     setEditorOpen(true);
   };
   const [saveOpen, setSaveOpen] = useState(false);
+  const copyRef = useRef<HTMLInputElement>(null);
+  const [copying, setCopying] = useState(false);
   const [trash, setTrash] = useState(false);
   const [community, setCommunity] = useState<CommunityPreset[]>([]);
 
   // Presets públicos de la comunidad, para empezar sin tener que armar nada.
   useEffect(() => {
     api<{ presets: CommunityPreset[] }>("/api/community/presets")
-      .then((r) => setCommunity(r.presets.slice(0, 24)))
+      .then((r) => setCommunity(r.presets))
       .catch(() => {});
   }, []);
 
+  const modeCommunity = community.filter((p) => p.mode === s.mode).slice(0, 24);
   const done = s.gens.filter((g) => g.result_file);
   // Imágenes ya usadas. Las referencias tienen borrado suave (papelera).
   // Cada archivo aparece una sola vez (varias generaciones pueden compartir la misma referencia).
@@ -67,8 +74,8 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
         )}
       </header>
 
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted p-1 text-sm font-medium">
-        {TABS.map(([k, label]) => (
+      <div className={cn("grid gap-1 rounded-xl bg-muted p-1 text-sm font-medium", tabs.length === 3 ? "grid-cols-3" : "grid-cols-2")}>
+        {tabs.map(([k, label]) => (
           <button
             key={k}
             type="button"
@@ -83,7 +90,7 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
       {tab === "mods" && (
         <>
           {/* La lista termina antes del fondo: abajo quedan fijos los accesos para crear modificadores. */}
-          <ModifierBrowser focused categories={s.categories} modifiers={s.modifiers} selected={s.selected} onToggle={s.toggle} />
+          <ModifierBrowser focused categories={s.modeCategories} modifiers={s.modeModifiers} selected={s.selected} onToggle={s.toggle} onFavorite={s.toggleModifierFavorite} />
           <div className="grid shrink-0 grid-cols-2 gap-2 border-t pt-3">
             <button
               type="button"
@@ -109,13 +116,39 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto pb-2">
           {s.tour.step === "preset" && (
             <p className="rounded-xl bg-primary px-3 py-2 text-sm font-medium text-primary-foreground">
-              {community.length > 0 || s.presets.length > 0
-                ? "Toca un preset (por ejemplo, uno de la comunidad) para aplicarlo a tu foto."
-                : "Aún no hay presets: ve a la pestaña Modificadores y elige uno."}
+              {modeCommunity.length > 0 || s.modePresets.length > 0 ? "Toca un preset" : "Elige un modificador en Modificadores"}
             </p>
           )}
+          {/* Copiar desde imagen: analiza una foto y crea un preset optimizado para este modo. */}
+          <input
+            ref={copyRef}
+            type="file"
+            accept="image/*"
+            hidden
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (!f) return;
+              setCopying(true);
+              await s.presetFromImage(f);
+              setCopying(false);
+            }}
+          />
+          <button
+            type="button"
+            disabled={copying}
+            onClick={() => copyRef.current?.click()}
+            title={`Elige una foto: se analiza y se crea un preset de ${s.modeDef.label} con su estilo (cuesta tokens de análisis)`}
+            className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-primary/50 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-60"
+          >
+            {copying ? <Loader2 className="size-5 animate-spin" /> : <ScanLine className="size-5" />}
+            {copying ? "Analizando imagen…" : "Copiar desde imagen"}
+          </button>
           <PresetCards
-            presets={s.presets}
+            presets={s.modePresets}
+            activeId={s.appliedPresetId}
+            results={s.presetResults}
+            onFavorite={s.togglePresetFavorite}
             onApply={(p) => {
               s.applyPreset(p);
               onClose?.();
@@ -123,11 +156,11 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
             onDelete={s.deletePreset}
             onTogglePublic={(p) => s.setPresetPublic(p.id, !p.is_public)}
           />
-          {community.length > 0 && (
+          {modeCommunity.length > 0 && (
             <section className="space-y-2">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase">De la comunidad</h3>
               <CommunityPresetCards
-                presets={community}
+                presets={modeCommunity}
                 onUse={async (p) => {
                   await s.applyCommunityPreset(p);
                   onClose?.();
@@ -135,6 +168,9 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
               />
             </section>
           )}
+          <div className="flex justify-center border-t pt-3">
+            <PresetTransfer mode={s.mode} onImported={s.refresh} />
+          </div>
         </div>
       )}
 
@@ -196,7 +232,7 @@ export function LibraryPanel({ s, onClose, className }: { s: StudioState; onClos
         </>
       )}
 
-      <ModifierEditor open={editorOpen} onOpenChange={setEditorOpen} initialMode={editorMode} categories={s.categories} onSaved={s.applyCreated} appliesOnScan selectedCount={s.selected.size} />
+      <ModifierEditor open={editorOpen} onOpenChange={setEditorOpen} initialMode={editorMode} studioMode={s.mode} categories={s.categories} onSaved={s.applyCreated} appliesOnScan selectedCount={s.selected.size} />
       <PresetSaveDialog open={saveOpen} onOpenChange={setSaveOpen} hasImage={!!s.image} materialCount={s.materials.length} onSave={s.savePreset} />
     </div>
   );

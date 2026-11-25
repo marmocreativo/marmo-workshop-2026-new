@@ -12,6 +12,7 @@ import { ModelSelect } from "./model-select";
 import { RatioSelect } from "./ratio-select";
 import { CategoryIcon } from "./category-icon";
 import { ModifierEditor } from "./modifier-editor";
+import { ReferenceRolesDialog } from "./reference-roles-dialog";
 import { useCompact } from "@/lib/use-compact";
 import type { StudioState } from "./use-studio";
 
@@ -24,14 +25,29 @@ const TOP = 16;
 const TOP_WITH_CORNER = 68; // deja libres los botones de los drawers (móvil)
 const OVERLAY_SAFE = 250; // alto reservado abajo para los controles
 
-// Miniatura de un material con botón para quitarlo.
-function MaterialThumb({ file, onRemove }: { file: File; onRemove: () => void }) {
+// Miniatura de un material con botón para quitarlo. En Estudio Pro se toca para elegir qué tomar de ella.
+function MaterialThumb({ file, onRemove, onEdit, roles }: { file: File; onRemove: () => void; onEdit?: () => void; roles?: string }) {
   const url = useMemo(() => URL.createObjectURL(file), [file]);
   useEffect(() => () => URL.revokeObjectURL(url), [url]);
   return (
     <div className="relative size-11 shrink-0">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {url && <img src={url} alt="Material" className="size-full rounded-xl object-cover" />}
+      {onEdit && (
+        <button
+          type="button"
+          onClick={onEdit}
+          title={roles ? `Toma: ${roles}` : "Elegir qué tomar de esta imagen"}
+          aria-label="Elegir qué tomar de esta imagen"
+          className={cn("absolute inset-0 rounded-xl ring-2", roles ? "ring-primary" : "ring-white/40 ring-dashed")}
+        >
+          {roles && (
+            <span className="absolute inset-x-0 bottom-0 truncate rounded-b-xl bg-primary px-0.5 text-[9px] leading-4 font-medium text-primary-foreground">
+              {roles}
+            </span>
+          )}
+        </button>
+      )}
       <button
         type="button"
         aria-label="Quitar material"
@@ -53,6 +69,9 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
   const [menuOpen, setMenuOpen] = useState(false); // con un menú abierto, los controles suben por encima de los pointers
   const fileRef = useRef<HTMLInputElement>(null);
   const matRef = useRef<HTMLInputElement>(null);
+  const [refIdx, setRefIdx] = useState<number | null>(null); // Estudio Pro: referencia cuyo rol se está eligiendo
+  const isPro = s.mode === "pro";
+  const slugName = (slug: string) => s.categories.find((c) => c.slug === slug)?.name ?? slug;
   const [size, setSize] = useState({ w: 0, h: 0 });
   const [dragging, setDragging] = useState(false);
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -166,7 +185,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
               <Button variant="outline" className="rounded-xl bg-white/10 text-white hover:bg-white/20" onClick={() => fileRef.current?.click()}>
                 <FolderOpen /> Explorar
               </Button>
-              <Button variant="outline" className="rounded-xl bg-white/10 text-white hover:bg-white/20" onClick={() => setCameraOpen(true)}>
+              <Button data-tour="camera" variant="outline" className="rounded-xl bg-white/10 text-white hover:bg-white/20" onClick={() => setCameraOpen(true)}>
                 <Camera /> Cámara
               </Button>
               <Button variant="outline" className="rounded-xl bg-white/10 text-white hover:bg-white/20" onClick={s.pasteFromClipboard}>
@@ -355,19 +374,28 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
                 accept="image/*"
                 multiple
                 hidden
-                onChange={(e) => {
-                  s.addMaterials([...(e.target.files ?? [])]);
+                onChange={async (e) => {
+                  const before = s.materials.length;
+                  const files = [...(e.target.files ?? [])];
                   e.target.value = "";
+                  await s.addMaterials(files);
+                  if (isPro && before < s.maxMaterials) setRefIdx(before); // en Pro se pregunta qué tomar de la imagen
                 }}
               />
               {s.materials.map((m, i) => (
-                <MaterialThumb key={i} file={m} onRemove={() => s.removeMaterial(i)} />
+                <MaterialThumb
+                  key={i}
+                  file={m}
+                  onRemove={() => s.removeMaterial(i)}
+                  onEdit={isPro ? () => setRefIdx(i) : undefined}
+                  roles={isPro ? (s.materialRoles[i] ?? []).map(slugName).join(", ") : undefined}
+                />
               ))}
               {s.maxMaterials > 0 && s.materials.length < s.maxMaterials && (
                 <button
                   type="button"
-                  title="Agregar material (logo, prenda, fondo...)"
-                  aria-label="Agregar material"
+                  title={isPro ? "Agregar imagen de referencia (outfit, fondo, pose...)" : "Agregar material (logo, prenda, fondo...)"}
+                  aria-label={isPro ? "Agregar referencia" : "Agregar material"}
                   onClick={() => matRef.current?.click()}
                   className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-white/10 text-white hover:bg-white/20"
                 >
@@ -384,7 +412,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
             />
             </div>
             <div className="flex gap-2">
-              <RatioSelect value={s.ratio} onChange={s.setRatio} ratios={model.ratios} onOpenChange={setMenuOpen} />
+              {s.modeDef.ratio && <RatioSelect value={s.ratio} onChange={s.setRatio} ratios={model.ratios} onOpenChange={setMenuOpen} />}
               <ModelSelect value={s.model} onChange={s.setModel} onOpenChange={setMenuOpen} />
             </div>
             <div className="flex items-center gap-2 text-xs text-white/70">
@@ -417,6 +445,14 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
           </div>
         </div>
       </div>
+      <ReferenceRolesDialog
+        key={refIdx ?? -1}
+        file={refIdx !== null ? (s.materials[refIdx] ?? null) : null}
+        categories={s.modeCategories}
+        value={refIdx !== null ? (s.materialRoles[refIdx] ?? []) : []}
+        onSave={(slugs) => refIdx !== null && s.setMaterialRoles(refIdx, slugs)}
+        onOpenChange={(o) => !o && setRefIdx(null)}
+      />
       <ModifierEditor
         open={!!editing}
         onOpenChange={(o) => !o && setEditing(null)}

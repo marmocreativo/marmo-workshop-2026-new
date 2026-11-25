@@ -1,67 +1,33 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, Plus, ScanSearch, Search, Star } from "lucide-react";
+import { Plus, Search, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { fileUrl } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import type { Category, Modifier } from "@/lib/types";
 import { CategorySelect } from "./category-select";
+import { CategoryIcon } from "./category-icon";
+import { Card, ResultsPopover, type CardHover } from "./preset-cards";
 
 type BrowserProps = {
   categories: Category[];
   modifiers: Modifier[];
   selected: Set<string>;
   onToggle: (id: string) => void;
+  /** Marca o desmarca como favorito (aparece primero). */
+  onFavorite?: (m: Modifier) => void;
   className?: string;
   /** Escritorio: una sola categoría a la vez (sin "Todos"); abre en "Más usados" o en la primera categoría. */
   focused?: boolean;
 };
 
-type Hover = { src: string; label: string; rect: DOMRect };
-
-// Miniatura con vista ampliada al pasar el mouse.
-function Thumb({ src, label, origin, onHover }: { src: string; label: string; origin?: boolean; onHover: (h: Hover | null) => void }) {
-  return (
-    <span
-      className={cn("relative block size-14 shrink-0 overflow-hidden rounded-xl", origin ? "ring-2 ring-primary/60" : "border")}
-      onMouseEnter={(e) => onHover({ src, label, rect: e.currentTarget.getBoundingClientRect() })}
-      onMouseLeave={() => onHover(null)}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={fileUrl(src)} alt={label} loading="lazy" className="size-full object-cover" />
-      {origin && (
-        <span className="absolute inset-x-0 bottom-0 flex items-center justify-center gap-0.5 bg-black/70 py-0.5 text-[9px] font-medium text-white">
-          <ScanSearch className="size-2.5" /> Origen
-        </span>
-      )}
-    </span>
-  );
-}
-
-function HoverPreview({ h }: { h: Hover }) {
-  const w = 340;
-  const left = Math.min(h.rect.right + 12, window.innerWidth - w - 12);
-  const top = Math.max(12, Math.min(h.rect.top + h.rect.height / 2 - 220, window.innerHeight - 452));
-  return (
-    <div
-      className="pointer-events-none fixed z-[100] overflow-hidden rounded-2xl border bg-black shadow-2xl"
-      style={{ left, top, width: w }}
-    >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={fileUrl(h.src)} alt="" className="max-h-[440px] w-full object-contain" />
-      <p className="bg-black/80 px-3 py-1 text-xs text-white">{h.label}</p>
-    </div>
-  );
-}
-
 // Buscador + categorías + lista seleccionable. Se usa en el panel móvil y en la columna de escritorio.
-export function ModifierBrowser({ categories, modifiers, selected, onToggle, className, focused }: BrowserProps) {
+export function ModifierBrowser({ categories, modifiers, selected, onToggle, onFavorite, className, focused }: BrowserProps) {
   const [picked, setPicked] = useState<string | null>(focused ? null : "all");
   const [search, setSearch] = useState("");
-  const [hover, setHover] = useState<Hover | null>(null);
+  const [hover, setHover] = useState<CardHover | null>(null);
   const hasTop = modifiers.some((m) => m.usage_count > 0);
   // Enfocado: sin elección explícita se abre en "Más usados" o, si no hay, en la primera categoría.
   const tab = picked ?? (focused ? (hasTop ? "top" : (categories[0]?.id ?? "top")) : "all");
@@ -74,6 +40,7 @@ export function ModifierBrowser({ categories, modifiers, selected, onToggle, cla
         if (q) return m.text.toLowerCase().includes(q);
         if (tab === "all" || tab === "new") return true;
         if (tab === "favs") return m.favorite === 1;
+        if (tab === "applied") return selected.has(m.id);
         if (tab === "top") return m.usage_count > 0;
         return m.category_id === tab;
       })
@@ -84,7 +51,7 @@ export function ModifierBrowser({ categories, modifiers, selected, onToggle, cla
             ? b.usage_count - a.usage_count
             : b.favorite - a.favorite || b.usage_count - a.usage_count,
       );
-  }, [modifiers, tab, search]);
+  }, [modifiers, tab, search, selected]);
 
   const catOf = (id: string) => categories.find((c) => c.id === id)?.name ?? "";
 
@@ -106,55 +73,58 @@ export function ModifierBrowser({ categories, modifiers, selected, onToggle, cla
         extra={[
           ...(focused ? [] : [{ value: "all", label: "Todos" }]),
           { value: "new", label: "Más nuevos" },
+          { value: "applied", label: `✓ Aplicados (${selected.size})` },
           { value: "favs", label: "★ Favoritos" },
           { value: "top", label: "Más usados" },
         ]}
       />
 
-      <ul className="-mx-1 min-h-0 flex-1 space-y-2 overflow-y-auto px-1 pb-2">
-        {list.length === 0 && <li className="py-10 text-center text-sm text-muted-foreground">Nada por aquí todavía.</li>}
-        {list.map((m) => {
-          const on = selected.has(m.id);
-          return (
-            <li key={m.id}>
-              <button
-                type="button"
+      {/* Grid de tarjetas (como los presets): imagen de origen de fondo, texto al centro y resultados al pasar el mouse. */}
+      <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1 pb-2">
+        {list.length === 0 && <p className="py-10 text-center text-sm text-muted-foreground">Nada por aquí todavía.</p>}
+        <ul className="grid grid-cols-2 content-start gap-2">
+          {list.map((m) => {
+            const on = selected.has(m.id);
+            const showCat = !!search || ["all", "new", "favs", "top", "applied"].includes(tab);
+            const results = [...(m.origin_file ? [m.origin_file] : []), ...(m.thumbs ?? [])].slice(0, 8);
+            const slug = categories.find((c) => c.id === m.category_id)?.slug;
+            return (
+              <Card
+                key={m.id}
+                name={m.text}
+                cover={m.origin_file ?? m.thumbs?.[0] ?? null}
+                active={on}
+                results={results}
                 onClick={() => onToggle(m.id)}
-                className={cn(
-                  "flex w-full items-start gap-3 rounded-2xl border p-3 text-left transition-colors",
-                  on ? "border-primary bg-primary/10" : "bg-card hover:bg-muted/60",
-                )}
+                onHover={setHover}
+                fallback={<CategoryIcon slug={slug} />}
+                textClassName="line-clamp-5 text-xs font-medium"
               >
-                <span
-                  className={cn(
-                    "mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full border",
-                    on && "border-primary bg-primary text-primary-foreground",
-                  )}
-                >
-                  {on && <Check className="size-3" />}
+                {onFavorite && (
+                  <button
+                    type="button"
+                    onClick={() => onFavorite(m)}
+                    aria-label={m.favorite ? "Quitar de favoritos" : "Marcar como favorito"}
+                    aria-pressed={m.favorite === 1}
+                    title={m.favorite ? "Quitar de favoritos" : "Favorito: aparece primero"}
+                    className={cn(
+                      "absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black",
+                      !m.favorite && "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-lg:opacity-100",
+                    )}
+                  >
+                    <Star className={cn("size-3.5", m.favorite === 1 && "fill-amber-400 text-amber-400")} />
+                  </button>
+                )}
+                <span className="pointer-events-none absolute inset-x-2 bottom-2 truncate text-center text-[10px] text-white/70">
+                  {showCat && `${catOf(m.category_id)} · `}
+                  {m.usage_count} {m.usage_count === 1 ? "uso" : "usos"}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block text-sm">{m.text}</span>
-                  <span className="mt-1 block text-xs text-muted-foreground">
-                    {(search || ["all", "new", "favs", "top"].includes(tab)) &&`${catOf(m.category_id)} · `}
-                    {m.usage_count} {m.usage_count === 1 ? "uso" : "usos"}
-                  </span>
-                  {(m.origin_file || (m.thumbs?.length ?? 0) > 0) && (
-                    <span className="mt-2 flex flex-wrap items-center gap-1.5">
-                      {m.origin_file && <Thumb src={m.origin_file} label="Imagen de origen" origin onHover={setHover} />}
-                      {m.thumbs?.slice(0, 4).map((f) => (
-                        <Thumb key={f} src={f} label="Resultado de referencia" onHover={setHover} />
-                      ))}
-                    </span>
-                  )}
-                </span>
-                {m.favorite === 1 && <Star className="size-4 shrink-0 fill-accent text-accent" />}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      {hover && <HoverPreview h={hover} />}
+              </Card>
+            );
+          })}
+        </ul>
+      </div>
+      {hover && <ResultsPopover key={hover.name + hover.rect.top} h={hover} />}
     </div>
   );
 }

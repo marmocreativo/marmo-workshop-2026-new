@@ -1,3 +1,5 @@
+import type { StudioMode } from "./modes";
+
 export type Category = { id: string; slug: string; name: string; sort: number };
 
 export type Modifier = {
@@ -37,6 +39,8 @@ export type Generation = {
   result_file: string | null;
   status: "processing" | "done" | "error";
   error: string | null;
+  /** Preset aplicado al generarla (si lo hubo). */
+  preset_id?: string | null;
   created_at: number;
   modifiers: GenerationModifier[];
 };
@@ -51,7 +55,13 @@ export type Preset = {
   instructions: string | null;
   /** Archivos de los materiales (imágenes extra) del preset; se cargan en el Studio y se pueden editar. */
   materials: string[];
+  /** Estudio Pro: categorías (slugs) que se toman de cada material, por nombre de archivo. */
+  material_roles: Record<string, string[]>;
   modifier_ids: string[];
+  /** Modo del Studio al que pertenece (filtro, ocio, producto, pro). */
+  mode: StudioMode;
+  /** 1 = favorito: aparece primero en la lista. */
+  favorite: number;
   /** 1 = visible para la comunidad (otros pueden guardarlo en su biblioteca). */
   is_public: number;
   created_at: number;
@@ -60,6 +70,7 @@ export type Preset = {
 export type CommunityPreset = {
   id: string;
   name: string;
+  mode: StudioMode;
   free_text: string | null;
   ref_file: string | null;
   modifiers: { text: string; category: string }[];

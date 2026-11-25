@@ -24,6 +24,7 @@ import type { Modifier, Preset } from "@/lib/types";
 import { CategorySelect } from "./category-select";
 import { ModifierEditor } from "./modifier-editor";
 import { PresetEditor } from "./preset-editor";
+import { PresetTransfer } from "./preset-transfer";
 import { useLibrary } from "./use-library";
 
 export function Library() {
@@ -163,6 +164,7 @@ export function Library() {
             {modifiers.length} modificadores · {presets.length} presets
           </p>
         </div>
+        {view === "presets" && <PresetTransfer onImported={refresh} />}
         {view === "mods" && (
           <Button
             onClick={() => {

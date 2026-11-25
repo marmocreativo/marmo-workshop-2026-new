@@ -1,12 +1,13 @@
 import { authed, handle } from "@/lib/api";
 import { query } from "@/lib/db";
+import { presetMode } from "@/lib/modes";
 import type { CommunityPreset } from "@/lib/types";
 
 // Presets que otros usuarios marcaron como públicos (sin datos del autor).
 export const GET = handle(async () => {
   const user = await authed();
-  const rows = await query<{ id: string; name: string; free_text: string | null; ref_file: string | null; modifier_ids: string; owner: string }>(
-    `SELECT id,name,free_text,ref_file,modifier_ids,user_id AS owner FROM presets
+  const rows = await query<{ id: string; name: string; free_text: string | null; ref_file: string | null; modifier_ids: string; mode: string | null; owner: string }>(
+    `SELECT id,name,free_text,ref_file,modifier_ids,mode,user_id AS owner FROM presets
      WHERE is_public=1 AND user_id<>? ORDER BY created_at DESC LIMIT 200`,
     [user.id],
   );
@@ -21,6 +22,7 @@ export const GET = handle(async () => {
   const presets: CommunityPreset[] = rows.map((r) => ({
     id: r.id,
     name: r.name,
+    mode: presetMode(r.mode),
     free_text: r.free_text,
     ref_file: r.ref_file,
     modifiers: (JSON.parse(r.modifier_ids) as string[])

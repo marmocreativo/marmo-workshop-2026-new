@@ -2,20 +2,29 @@ import { z } from "zod";
 import { HttpError, authed, handle } from "@/lib/api";
 import { one, query, run, uid } from "@/lib/db";
 import { readStored, saveFile } from "@/lib/storage";
+import { parseRoleList, parseRoleMap, roleMapOf } from "@/lib/material-roles";
+import { isMode, presetMode } from "@/lib/modes";
 import type { Preset } from "@/lib/types";
 
-type Row = Omit<Preset, "modifier_ids" | "materials"> & { modifier_ids: string; materials: string | null };
+type Row = Omit<Preset, "modifier_ids" | "materials" | "mode" | "material_roles"> & {
+  modifier_ids: string;
+  materials: string | null;
+  mode: string | null;
+  material_roles: string | null;
+};
 
 const parse = (r: Row): Preset => ({
   ...r,
   modifier_ids: JSON.parse(r.modifier_ids) as string[],
   materials: r.materials ? (JSON.parse(r.materials) as string[]) : [],
+  mode: presetMode(r.mode),
+  material_roles: parseRoleMap(r.material_roles),
 });
 
 export const GET = handle(async () => {
   const user = await authed();
   const rows = await query<Row>(
-    "SELECT id,name,free_text,instructions,materials,ref_file,modifier_ids,is_public,created_at FROM presets WHERE user_id=? ORDER BY created_at DESC LIMIT 200",
+    "SELECT id,name,free_text,instructions,materials,ref_file,modifier_ids,mode,material_roles,favorite,is_public,created_at FROM presets WHERE user_id=? ORDER BY favorite DESC, created_at DESC LIMIT 200",
     [user.id],
   );
   return Response.json({ presets: rows.map(parse) });
@@ -37,6 +46,8 @@ export const POST = handle(async (req: Request) => {
   const generationId = form.get("generationId");
   if (typeof generationId === "string" && generationId) {
     const name = z.string().trim().min(1).max(60).parse(form.get("name"));
+    const gm = form.get("mode");
+    const mode = isMode(gm) ? gm : "pro";
     const g = await one<{ free_text: string | null; result_file: string | null; kind: string }>(
       "SELECT free_text,result_file,kind FROM generations WHERE id=? AND user_id=?",
       [generationId, user.id],
@@ -62,18 +73,22 @@ export const POST = handle(async (req: Request) => {
       free_text: g.free_text || null,
       instructions: null,
       materials: [],
+      material_roles: {},
+      favorite: 0,
+      mode,
       ref_file: cover,
       modifier_ids: mods.map((m) => m.modifier_id),
       is_public: 0,
       created_at: Date.now(),
     };
-    await run("INSERT INTO presets(id,user_id,name,free_text,ref_file,modifier_ids,created_at) VALUES(?,?,?,?,?,?,?)", [
+    await run("INSERT INTO presets(id,user_id,name,free_text,ref_file,modifier_ids,mode,created_at) VALUES(?,?,?,?,?,?,?,?)", [
       preset.id,
       user.id,
       preset.name,
       preset.free_text,
       preset.ref_file,
       JSON.stringify(preset.modifier_ids),
+      preset.mode,
       preset.created_at,
     ]);
     return Response.json({ preset });
@@ -108,8 +123,11 @@ export const POST = handle(async (req: Request) => {
     refFile = await saveFile(user.id, Buffer.from(await image.arrayBuffer()), image.type === "image/png" ? "png" : "jpg");
   }
   const matFiles: string[] = [];
-  for (const f of form.getAll("materials").slice(0, 3)) {
+  const matRoles: string[][] = [];
+  const sentRoles = parseRoleList(form.get("materialRoles"));
+  for (const [i, f] of form.getAll("materials").slice(0, 3).entries()) {
     if (!(f instanceof File) || f.size === 0) continue;
+    matRoles.push(sentRoles[i] ?? []);
     if (!f.type.startsWith("image/")) throw new HttpError(400, "Los materiales deben ser imágenes");
     if (f.size > 8 * 1024 * 1024) throw new HttpError(413, "Un material es muy pesado");
     matFiles.push(await saveFile(user.id, Buffer.from(await f.arrayBuffer()), f.type === "image/png" ? "png" : "jpg"));
@@ -120,20 +138,25 @@ export const POST = handle(async (req: Request) => {
     free_text: data.freeText || null,
     instructions: data.instructions || null,
     materials: matFiles,
+    material_roles: {},
+    favorite: 0,
+    mode: presetMode(String(form.get("mode") ?? "")),
     ref_file: refFile,
     modifier_ids: valid,
     is_public: 0,
     created_at: Date.now(),
   };
-  await run("INSERT INTO presets(id,user_id,name,free_text,instructions,materials,ref_file,modifier_ids,created_at) VALUES(?,?,?,?,?,?,?,?,?)", [
+  await run("INSERT INTO presets(id,user_id,name,free_text,instructions,materials,material_roles,ref_file,modifier_ids,mode,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)", [
     preset.id,
     user.id,
     preset.name,
     preset.free_text,
     preset.instructions,
     matFiles.length ? JSON.stringify(matFiles) : null,
+    roleMapOf(matFiles, matRoles),
     preset.ref_file,
     JSON.stringify(valid),
+    preset.mode,
     preset.created_at,
   ]);
   return Response.json({ preset });

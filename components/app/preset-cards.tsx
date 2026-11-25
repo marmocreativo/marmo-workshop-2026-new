@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Bookmark, Globe, Loader2, Lock, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Bookmark, Check, Globe, Loader2, Lock, Star, X } from "lucide-react";
 import { confirmAction, toast } from "@/lib/alerts";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -11,18 +11,128 @@ import { fileUrl } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import type { CommunityPreset, Preset } from "@/lib/types";
 
-// Cards con la imagen de referencia de fondo para reconocer los presets de un vistazo.
+export type CardHover = { files: string[]; name: string; rect: DOMRect };
+type Hover = CardHover;
+
+// Escritorio: al pasar el mouse sobre una tarjeta, carrusel con los resultados hechos con ese preset.
+export function ResultsPopover({ h }: { h: Hover }) {
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    if (h.files.length < 2) return;
+    const t = setInterval(() => setI((n) => (n + 1) % h.files.length), 1400);
+    return () => clearInterval(t);
+  }, [h.files.length]);
+  const w = 300;
+  const left = h.rect.right + 12 + w < window.innerWidth ? h.rect.right + 12 : Math.max(12, h.rect.left - w - 12);
+  const top = Math.max(12, Math.min(h.rect.top + h.rect.height / 2 - 200, window.innerHeight - 412));
+  return (
+    <div className="pointer-events-none fixed z-[100] overflow-hidden rounded-2xl border bg-black shadow-2xl" style={{ left, top, width: w }}>
+      <div className="relative aspect-[3/4]">
+        {h.files.map((f, k) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={f}
+            src={fileUrl(f)}
+            alt=""
+            className={cn("absolute inset-0 size-full object-cover transition-opacity duration-500", k === i ? "opacity-100" : "opacity-0")}
+          />
+        ))}
+      </div>
+      <div className="flex items-center justify-between gap-2 bg-black/85 px-3 py-2 text-xs text-white">
+        <span className="truncate font-medium">{h.name}</span>
+        <span className="flex shrink-0 gap-1">
+          {h.files.map((f, k) => (
+            <span key={f} className={cn("size-1.5 rounded-full", k === i ? "bg-white" : "bg-white/35")} />
+          ))}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+const canHover = () => typeof window !== "undefined" && window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+// Tarjeta: imagen de origen de fondo con overlay negro al 60 % y el nombre al centro.
+// Se usa para presets y para modificadores (Estudio Pro).
+export function Card({
+  name,
+  cover,
+  active,
+  results,
+  onClick,
+  onHover,
+  children,
+  fallback,
+  textClassName,
+}: {
+  name: string;
+  cover: string | null;
+  active?: boolean;
+  results?: string[];
+  onClick: () => void;
+  onHover: (h: Hover | null) => void;
+  children?: React.ReactNode;
+  /** Icono de fondo cuando no hay imagen. */
+  fallback?: React.ReactNode;
+  textClassName?: string;
+}) {
+  return (
+    <li
+      className="group relative"
+      onMouseEnter={(e) => results?.length && canHover() && onHover({ files: results, name, rect: e.currentTarget.getBoundingClientRect() })}
+      onMouseLeave={() => onHover(null)}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className={cn(
+          "relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden rounded-2xl border bg-muted p-3 text-center",
+          active && "ring-3 ring-primary",
+        )}
+      >
+        {cover ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={fileUrl(cover)} alt="" loading="lazy" className="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-105" />
+        ) : (
+          <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white/15 [&_svg]:size-12">{fallback ?? <Bookmark />}</span>
+        )}
+        <span className="absolute inset-0 bg-black/60" />
+        <span className={cn("relative line-clamp-3 text-sm leading-snug font-semibold break-words text-white", textClassName)}>{name}</span>
+      </button>
+      {/* Indicador de seleccionado */}
+      <span
+        className={cn(
+          "pointer-events-none absolute top-2 left-2 flex size-6 items-center justify-center rounded-full border-2",
+          active ? "border-primary bg-primary text-primary-foreground" : "border-white/70 bg-black/30",
+        )}
+      >
+        {active && <Check className="size-3.5" />}
+      </span>
+      {children}
+    </li>
+  );
+}
+
+const iconBtn = "flex size-7 items-center justify-center rounded-full bg-black/70 text-white hover:bg-black";
+
 export function PresetCards({
   presets,
+  activeId,
+  results = {},
   onApply,
   onDelete,
   onTogglePublic,
+  onFavorite,
 }: {
   presets: Preset[];
+  activeId?: string | null;
+  results?: Record<string, string[]>;
   onApply: (p: Preset) => void;
   onDelete: (id: string) => void;
   onTogglePublic: (p: Preset) => void;
+  onFavorite?: (p: Preset) => void;
 }) {
+  const [hover, setHover] = useState<Hover | null>(null);
   if (presets.length === 0) {
     return (
       <p className="py-4 text-center text-sm text-muted-foreground">
@@ -31,61 +141,47 @@ export function PresetCards({
     );
   }
   return (
-    <ul className="grid grid-cols-2 content-start gap-2">
-      {presets.map((p) => (
-        <li key={p.id} className="group relative">
-          <button
-            type="button"
-            onClick={() => onApply(p)}
-            className="relative flex aspect-square w-full items-end overflow-hidden rounded-2xl border bg-muted text-left"
-          >
-            {p.ref_file ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={fileUrl(p.ref_file)}
-                alt=""
-                loading="lazy"
-                className="absolute inset-0 size-full object-cover transition-transform group-hover:scale-105"
-              />
-            ) : (
-              <Bookmark className="absolute top-1/2 left-1/2 size-10 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/40" />
-            )}
-            <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-            <span className="relative w-full p-3 text-white">
-              <span className="block truncate text-sm font-semibold">{p.name}</span>
-              <span className="block truncate text-xs text-white/70">
-                {p.modifier_ids.length} modificador{p.modifier_ids.length === 1 ? "" : "es"}
-                {p.free_text ? ` · ${p.free_text}` : ""}
-              </span>
-            </span>
-          </button>
-          <button
-            type="button"
-            aria-label={p.is_public ? "Público: pulsa para hacerlo privado" : "Privado: pulsa para hacerlo público"}
-            title={p.is_public ? "Público (clic para hacerlo privado)" : "Privado (clic para compartirlo con la comunidad)"}
-            onClick={() => onTogglePublic(p)}
-            className={cn(
-              "absolute top-2 left-2 flex size-7 items-center justify-center rounded-full text-white",
-              p.is_public ? "bg-primary" : "bg-black/70",
-            )}
-          >
-            {p.is_public ? <Globe className="size-3.5" /> : <Lock className="size-3.5" />}
-          </button>
-          <button
-            type="button"
-            aria-label="Eliminar preset"
-            title="Eliminar preset"
-            onClick={async () => (await confirmAction("Se borrará de tu biblioteca.", { title: `¿Eliminar el preset "${p.name}"?`, confirmText: "Eliminar", danger: true })) && onDelete(p.id)}
-            className={cn(
-              "absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-black/70 text-white",
-              "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-lg:opacity-100",
-            )}
-          >
-            <X className="size-3.5" />
-          </button>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="grid grid-cols-2 content-start gap-2">
+        {presets.map((p) => (
+          <Card key={p.id} name={p.name} cover={p.ref_file} active={activeId === p.id} results={results[p.id]} onClick={() => onApply(p)} onHover={setHover}>
+            <div className="absolute top-2 right-2 flex gap-1">
+              {onFavorite && (
+                <button
+                  type="button"
+                  aria-label={p.favorite ? "Quitar de favoritos" : "Marcar como favorito"}
+                  aria-pressed={!!p.favorite}
+                  title={p.favorite ? "Quitar de favoritos" : "Favorito: aparece primero"}
+                  onClick={() => onFavorite(p)}
+                  className={cn(iconBtn, !p.favorite && "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-lg:opacity-100")}
+                >
+                  <Star className={cn("size-3.5", p.favorite && "fill-amber-400 text-amber-400")} />
+                </button>
+              )}
+              <button
+                type="button"
+                aria-label={p.is_public ? "Público: pulsa para hacerlo privado" : "Privado: pulsa para hacerlo público"}
+                title={p.is_public ? "Público (clic para hacerlo privado)" : "Privado (clic para compartirlo con la comunidad)"}
+                onClick={() => onTogglePublic(p)}
+                className={cn(iconBtn, p.is_public ? "bg-primary hover:bg-primary" : "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-lg:opacity-100")}
+              >
+                {p.is_public ? <Globe className="size-3.5" /> : <Lock className="size-3.5" />}
+              </button>
+              <button
+                type="button"
+                aria-label="Eliminar preset"
+                title="Eliminar preset"
+                onClick={async () => (await confirmAction("Se borrará de tu biblioteca.", { title: `¿Eliminar el preset "${p.name}"?`, confirmText: "Eliminar", danger: true })) && onDelete(p.id)}
+                className={cn(iconBtn, "opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100 max-lg:opacity-100")}
+              >
+                <X className="size-3.5" />
+              </button>
+            </div>
+          </Card>
+        ))}
+      </ul>
+      {hover && <ResultsPopover key={hover.name + hover.rect.top} h={hover} />}
+    </>
   );
 }
 
@@ -95,27 +191,7 @@ export function CommunityPresetCards({ presets, onUse }: { presets: CommunityPre
   return (
     <ul className="grid grid-cols-2 content-start gap-2">
       {presets.map((p) => (
-        <li key={p.id} className="group">
-          <button
-            type="button"
-            onClick={() => onUse(p)}
-            className="relative flex aspect-square w-full items-end overflow-hidden rounded-2xl border bg-muted text-left"
-          >
-            {p.ref_file ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={fileUrl(p.ref_file)} alt="" loading="lazy" className="absolute inset-0 size-full object-cover transition-transform group-hover:scale-105" />
-            ) : (
-              <Bookmark className="absolute top-1/2 left-1/2 size-10 -translate-x-1/2 -translate-y-1/2 text-muted-foreground/40" />
-            )}
-            <span className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-            <span className="relative w-full p-3 text-white">
-              <span className="block truncate text-sm font-semibold">{p.name}</span>
-              <span className="block truncate text-xs text-white/70">
-                {p.modifiers.length} modificador{p.modifiers.length === 1 ? "" : "es"}
-              </span>
-            </span>
-          </button>
-        </li>
+        <Card key={p.id} name={p.name} cover={p.ref_file} onClick={() => onUse(p)} onHover={() => {}} />
       ))}
     </ul>
   );

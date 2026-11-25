@@ -1,71 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ImagePlus, Layers, SlidersHorizontal, Sparkles } from "lucide-react";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCompact } from "@/lib/use-compact";
+import { OnboardingSlides } from "./onboarding-slides";
 import type { StudioState, TourStep } from "./use-studio";
 
-type Info = { n: number; title: string; text: string; short: string; target?: string; action?: "next" | "finish" };
+type Info = { n: number; text: string; target?: string; action?: "next" | "finish" };
 
-// Textos del tutorial. `target` es el elemento a resaltar (data-tour); sin él, la tarjeta va centrada.
+// Tutorial minimalista: una frase de 2-4 palabras por paso y el botón resaltado como única zona tocable.
 const STEPS: Record<Exclude<TourStep, "result" | "intro">, Info> = {
-  photo: {
-    n: 1,
-    title: "¡Hola, bienvenido a Marmo Workshop!",
-    text: "Empecemos: elige una foto de tu dispositivo, toma una con la cámara o pégala con Ctrl+V.",
-    short: "Elige una foto o toma una con la cámara.",
-    target: "upload",
-  },
-  preset: {
-    n: 2,
-    title: "Elige un preset",
-    text: "Abre la Biblioteca y entra a Presets: ahí verás los presets públicos de la comunidad. Toca uno para aplicarlo a tu foto.",
-    short: "Abre la biblioteca y toca un preset.",
-    target: "library",
-  },
-  process: {
-    n: 3,
-    title: "Ahora, procesa",
-    text: "Pulsa Procesar y espera a que termine. Esta primera generación es gratis con los modelos estándar. Puede tardar hasta un minuto; no cierres la página.",
-    short: "Pulsa Procesar. La primera es gratis.",
-    target: "process",
-  },
-  wait: {
-    n: 3,
-    title: "Procesando…",
-    text: "Estamos creando tu imagen. Espera sin cerrar la página; tu resultado se abrirá solo.",
-    short: "Creando tu imagen. No cierres la página.",
-    target: "gallery",
-  },
-  edit: {
-    n: 5,
-    title: "¿No quedó al 100 %?",
-    text: "Ajusta lo que quieras: cambia, agrega o quita modificadores, escribe en el prompt manual lo que quieras cambiar, o prueba otro modelo y otra proporción. Luego vuelve a procesar.",
-    short: "Ajusta modificadores, prompt o modelo y vuelve a procesar.",
-    target: "controls",
-    action: "next",
-  },
-  final: {
-    n: 6,
-    title: "¡Ahora te toca a ti!",
-    text: "Haz una última prueba con otro preset o con tus propios modificadores. Cada proceso gasta tokens según el modelo. ¡A crear!",
-    short: "Prueba otro preset. ¡A crear!",
-    action: "finish",
-  },
+  photo: { n: 1, text: "Tómate una selfie", target: "camera" },
+  preset: { n: 2, text: "Elige un preset", target: "library" },
+  process: { n: 3, text: "Toca Procesar", target: "process" },
+  wait: { n: 3, text: "Creando tu imagen, ten paciencia", target: "gallery" },
+  edit: { n: 4, text: "Ajusta y repite", target: "controls", action: "next" },
+  final: { n: 5, text: "¡Listo! A crear", action: "finish" },
 };
+const TOTAL = 5;
 
 type Rect = { top: number; left: number; width: number; height: number };
 
-// Tutorial para cuentas nuevas: resalta el elemento del paso (sin bloquear los clics) y muestra una tarjeta guía.
 export function TourOverlay({ s }: { s: StudioState }) {
   const step = s.tour.step;
   const info = step && step !== "result" && step !== "intro" ? STEPS[step] : null;
   const compact = useCompact();
   const [rect, setRect] = useState<Rect | null>(null);
   const [hidden, setHidden] = useState(false);
-  const [vp, setVp] = useState({ w: 0, h: 0 });
+  const [vh, setVh] = useState(0);
 
   // Sigue la posición del elemento (la interfaz cambia de tamaño, hay drawers, etc.).
   useEffect(() => {
@@ -76,7 +40,7 @@ export function TourOverlay({ s }: { s: StudioState }) {
       const next = r && r.width > 0 ? { top: r.top, left: r.left, width: r.width, height: r.height } : null;
       setRect((o) => (o && next && o.top === next.top && o.left === next.left && o.width === next.width && o.height === next.height ? o : next));
       setHidden(!!document.querySelector('[role="dialog"]')); // con un drawer o popup abierto se oculta
-      setVp((o) => (o.w === window.innerWidth && o.h === window.innerHeight ? o : { w: window.innerWidth, h: window.innerHeight }));
+      setVh(window.innerHeight);
     };
     const first = setTimeout(tick, 0);
     const id = setInterval(tick, 500);
@@ -86,126 +50,62 @@ export function TourOverlay({ s }: { s: StudioState }) {
     };
   }, [info]);
 
-  // Bienvenida: antes del tutorial explica qué es la aplicación y cómo se usa.
-  if (step === "intro") {
-    const points = [
-      { Icon: ImagePlus, text: compact ? "Agrega una foto tuya, de tu mascota o de un grupo." : "Agrega una fotografía tuya, de una mascota o de un grupo de personas." },
-      { Icon: Layers, text: compact ? "Elige un preset." : "Elige un preset como punto de inicio." },
-      { Icon: SlidersHorizontal, text: compact ? "Edita presets y modificadores y guárdalos." : "Puedes modificar los presets y los modificadores de texto para guardarlos y tener resultados consistentes." },
-    ];
-    return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center overflow-y-auto bg-black/70 p-3 sm:backdrop-blur-[6px]">
-        <div role="dialog" aria-modal="true" className="animate-in fade-in-0 w-full max-w-md rounded-3xl border-2 border-primary bg-popover p-4 text-popover-foreground sm:p-6 shadow-[0_20px_60px_rgba(0,0,0,.5)] duration-500">
-          <span className="flex size-11 items-center justify-center rounded-2xl bg-primary/15 text-primary">
-            <Sparkles className="size-6" />
-          </span>
-          <h3 className="mt-3 text-xl leading-tight font-semibold">Bienvenido a Marmo Workshop</h3>
-          {!compact && <p className="mt-2 text-base leading-relaxed text-foreground/85">Una aplicación de edición avanzada de fotografías usando IA.</p>}
-          <ol className="mt-3 space-y-2.5">
-            {points.map(({ Icon, text }, i) => (
-              <li key={i} className="flex items-start gap-3 text-sm leading-relaxed">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-primary">
-                  <Icon className="size-4" />
-                </span>
-                <span className="pt-1">{text}</span>
-              </li>
-            ))}
-          </ol>
-          <div className="mt-5 flex items-center justify-between gap-2">
-            <button type="button" onClick={s.tour.finish} className="text-sm text-muted-foreground underline-offset-2 hover:underline">
-              Saltar
-            </button>
-            <Button className="h-10 px-5 text-base" onClick={s.tour.next}>
-              Empezar el tutorial
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
+  // Bienvenida: slides con los modos antes del tutorial.
+  if (step === "intro") return <OnboardingSlides compact={compact} onDone={s.tour.next} onSkip={s.tour.finish} />;
   if (!info || hidden) return null;
 
-  const pad = 6;
-  const cardW = Math.min(400, vp.w - 24);
-  // La tarjeta va donde quepa dentro de la pantalla: abajo o arriba del recuadro; si es una columna alta
-  // (escritorio), a su lado; y si nada cabe, encima. Así nunca queda fuera de la vista.
-  const cardH = 300; // alto estimado de la tarjeta
-  const m = 12;
-  const gap = pad + 16;
-  const clampX = (x: number) => Math.min(Math.max(m, x), Math.max(m, vp.w - cardW - m));
-  const clampY = (y: number) => Math.min(Math.max(m, y), Math.max(m, vp.h - cardH - m));
-  const dockTop = !!rect && rect.top + rect.height / 2 > vp.h / 2; // en pantallas pequeñas la tarjeta se ancla arriba o abajo
-  let cardStyle: React.CSSProperties = { left: clampX((vp.w - cardW) / 2), top: clampY(vp.h / 2 - cardH / 2), width: cardW };
-  if (rect) {
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const spaceBelow = vp.h - (rect.top + rect.height) - gap - m;
-    const spaceAbove = rect.top - gap - m;
-    const spaceRight = vp.w - (rect.left + rect.width) - gap - m;
-    const spaceLeft = rect.left - gap - m;
-    const below = { left: clampX(cx - cardW / 2), top: rect.top + rect.height + gap, width: cardW };
-    const above = { left: clampX(cx - cardW / 2), top: rect.top - gap - cardH, width: cardW };
-    const right = { left: rect.left + rect.width + gap, top: clampY(cy - cardH / 2), width: cardW };
-    const leftSide = { left: rect.left - gap - cardW, top: clampY(cy - cardH / 2), width: cardW };
-    const vertical: [boolean, React.CSSProperties][] =
-      cy < vp.h / 2
-        ? [[spaceBelow >= cardH, below], [spaceAbove >= cardH, above]]
-        : [[spaceAbove >= cardH, above], [spaceBelow >= cardH, below]];
-    const sides: [boolean, React.CSSProperties][] =
-      cx < vp.w / 2
-        ? [[spaceRight >= cardW, right], [spaceLeft >= cardW, leftSide]]
-        : [[spaceLeft >= cardW, leftSide], [spaceRight >= cardW, right]];
-    const pick = [...vertical, ...sides].find(([fits]) => fits);
-    // Sin espacio en ningún lado (el recuadro ocupa casi toda la pantalla): sobre el recuadro, centrada.
-    cardStyle = pick ? pick[1] : { left: clampX(cx - cardW / 2), top: clampY(cy - cardH / 2), width: cardW };
-  }
-
-  if (compact) cardStyle = { left: m, right: m, ...(dockTop ? { top: m } : { bottom: m }) };
+  const pad = 5;
+  // La tarjeta se ancla arriba o abajo de la pantalla, del lado contrario al elemento resaltado.
+  const targetBelow = !!rect && rect.top + rect.height / 2 > vh / 2;
+  const Arrow = targetBelow ? ArrowDown : ArrowUp;
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[60]">
       {rect ? (
         <>
-          {/* Cuatro paneles con desenfoque rodean el recuadro: lo resaltado queda nítido y el resto de la interfaz, borrosa. */}
+          {/* Cuatro paneles oscuros rodean el recuadro y bloquean los toques: solo lo resaltado responde. */}
           {[
             { top: 0, left: 0, width: "100%", height: Math.max(0, rect.top - pad) },
-            { top: rect.top + rect.height + pad, left: 0, width: "100%", height: Math.max(0, vp.h - (rect.top + rect.height + pad)) },
+            { top: rect.top + rect.height + pad, left: 0, width: "100%", bottom: 0 },
             { top: rect.top - pad, left: 0, width: Math.max(0, rect.left - pad), height: rect.height + pad * 2 },
-            { top: rect.top - pad, left: rect.left + rect.width + pad, width: Math.max(0, vp.w - (rect.left + rect.width + pad)), height: rect.height + pad * 2 },
+            { top: rect.top - pad, left: rect.left + rect.width + pad, right: 0, height: rect.height + pad * 2 },
           ].map((st, i) => (
-            <div key={i} className={cn("absolute bg-black/55 transition-all duration-200", !compact && "backdrop-blur-[6px]")} style={st} />
+            <div key={i} className="pointer-events-auto absolute bg-black/65" style={st} />
           ))}
           <div
-            className="absolute rounded-2xl ring-[3px] ring-primary transition-all duration-200"
+            className="mw-heartbeat absolute rounded-2xl ring-4 ring-primary"
             style={{ top: rect.top - pad, left: rect.left - pad, width: rect.width + pad * 2, height: rect.height + pad * 2 }}
           >
-            {!compact && <span className="absolute inset-0 animate-ping rounded-2xl ring-2 ring-primary/70" />}
+            {!compact && <span className="absolute inset-0 animate-ping rounded-2xl ring-2 ring-primary/60" />}
           </div>
         </>
       ) : (
-        <div className={cn("absolute inset-0 bg-black/60", !compact && "backdrop-blur-[6px]")} />
+        <div className={cn("absolute inset-0 bg-black/65", info.action && "pointer-events-auto")} />
       )}
-      <div className="pointer-events-auto absolute" style={cardStyle} role="status">
-       {/* key: la tarjeta vuelve a animarse en cada paso */}
-       <div
-        key={step}
-        className={cn("rounded-3xl border-2 border-primary bg-popover text-popover-foreground shadow-[0_20px_60px_rgba(0,0,0,.5)]", compact ? "p-3" : "animate-in fade-in-0 zoom-in-90 slide-in-from-bottom-6 p-5 duration-500")}
-       >
-        <p className="text-xs font-bold tracking-wide text-primary uppercase">Paso {info.n} de 6</p>
-        <h3 className={cn("font-semibold leading-tight", compact ? "mt-0.5 text-base" : "mt-1.5 text-2xl")}>{info.title}</h3>
-        <p className={cn("text-foreground/85", compact ? "mt-1 text-sm leading-snug" : "mt-2 text-base leading-relaxed")}>{compact ? info.short : info.text}</p>
-        <div className="mt-2 flex items-center justify-between gap-2">
-          <button type="button" onClick={s.tour.finish} className="text-sm text-muted-foreground underline-offset-2 hover:underline">
-            {compact ? "Saltar" : "Saltar tutorial"}
-          </button>
-          {info.action && (
-            <Button className="h-10 px-5 text-base" onClick={info.action === "next" ? s.tour.next : s.tour.finish}>
-              {info.action === "next" ? "Siguiente" : "Empezar a crear"}
-            </Button>
-          )}
+
+      <div
+        role="status"
+        className={cn("pointer-events-auto absolute inset-x-3 mx-auto max-w-xs", rect ? (targetBelow ? "top-3" : "bottom-3") : "top-1/2 -translate-y-1/2")}
+      >
+        <div className="rounded-2xl border-2 border-primary bg-popover px-3 py-2.5 text-popover-foreground shadow-2xl">
+          <div className="flex items-center gap-2">
+            {rect && <Arrow className={cn("size-5 shrink-0 text-primary", !compact && "animate-bounce")} />}
+            <p className="min-w-0 flex-1 text-base leading-tight font-semibold">{info.text}</p>
+            <span className="shrink-0 text-xs font-bold text-primary">
+              {info.n}/{TOTAL}
+            </span>
+          </div>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <button type="button" onClick={s.tour.finish} className="h-8 px-1 text-xs text-muted-foreground underline-offset-2 hover:underline">
+              Saltar
+            </button>
+            {info.action && (
+              <Button size="sm" className="h-8 px-4" onClick={info.action === "next" ? s.tour.next : s.tour.finish}>
+                {info.action === "next" ? "Siguiente" : "Empezar"}
+              </Button>
+            )}
+          </div>
         </div>
-       </div>
       </div>
     </div>
   );

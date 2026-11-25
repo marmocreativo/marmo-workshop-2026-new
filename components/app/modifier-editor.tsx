@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { requestBalanceRefresh } from "@/lib/balance";
 import { api, jsonBody, resizeImage } from "@/lib/client";
 import { cn } from "@/lib/utils";
+import { MODES, type StudioMode } from "@/lib/modes";
 import type { Category, Modifier } from "@/lib/types";
 import { CategorySelect } from "./category-select";
 import { CategoryIcon } from "./category-icon";
@@ -31,6 +32,15 @@ type Props = {
   keepOriginal?: boolean;
   /** Pestaña con la que abre el diálogo (por defecto, escribir). */
   initialMode?: "write" | "analyze";
+  /** Modo del Studio: el análisis se optimiza para él (se puede cambiar en el diálogo). */
+  studioMode?: StudioMode;
+};
+
+const ANALYSIS_HINT: Record<StudioMode, string> = {
+  filtro: "Solo el look: luz, lente, ambiente del fondo y color. Ignora ropa, pose y objetos.",
+  ocio: "El concepto: escena, estilo, acción y vestuario para recrearlo con otras personas o mascotas.",
+  producto: "La puesta en escena: luz, fondo, superficie y props, sin describir el producto.",
+  pro: "Todo, con detalle técnico, para combinar con control total.",
 };
 
 export function ModifierEditor({
@@ -44,7 +54,13 @@ export function ModifierEditor({
   selectedCount = 0,
   keepOriginal,
   initialMode = "write",
+  studioMode = "pro",
 }: Props) {
+  const [focus, setFocus] = useState<StudioMode>(studioMode);
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (open) setFocus(studioMode);
+  }, [open, studioMode]);
   const [mode, setMode] = useState<"write" | "analyze">("write");
   const [categoryId, setCategoryId] = useState("");
   const [text, setText] = useState("");
@@ -124,8 +140,11 @@ export function ModifierEditor({
         onOpenChange(false);
         return;
       } else {
-        await api("/api/modifiers", { method: "POST", body: jsonBody({ items: [{ categoryId, text }] }) });
-        toast.success("Modificador creado");
+        const r = await api<{ modifiers: Modifier[] }>("/api/modifiers", { method: "POST", body: jsonBody({ items: [{ categoryId, text }] }) });
+        toast.success(appliesOnScan ? "Modificador creado y aplicado a tu foto" : "Modificador creado");
+        await onSaved(r.modifiers);
+        onOpenChange(false);
+        return;
       }
       await onSaved();
       onOpenChange(false);
@@ -145,6 +164,7 @@ export function ModifierEditor({
       originRef.current = small; // se sube al guardar, como "origen" de los modificadores
       showOrigin(small);
       form.set("image", small);
+      form.set("mode", focus);
       const { suggestions: s } = await api<{ suggestions: { categoryId: string; text: string }[] }>("/api/analyze", {
         method: "POST",
         body: form,
@@ -239,6 +259,24 @@ export function ModifierEditor({
           </div>
         ) : (
           <div className="space-y-3">
+            {/* Optimización del análisis: cada modo extrae cosas distintas de la imagen. */}
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">Optimizar análisis para</p>
+              <div className="grid grid-cols-4 gap-1 rounded-xl bg-muted p-1">
+                {MODES.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => setFocus(m.id)}
+                    className={cn("h-8 truncate rounded-lg px-1 text-xs font-medium", focus === m.id ? "bg-background shadow-sm" : "text-muted-foreground")}
+                  >
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">{ANALYSIS_HINT[focus]}</p>
+            </div>
             <input
               ref={fileRef}
               type="file"

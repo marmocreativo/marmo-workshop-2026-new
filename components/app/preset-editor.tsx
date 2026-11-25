@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { api, fileUrl, resizeImage } from "@/lib/client";
 import { cn } from "@/lib/utils";
+import { MODES, type StudioMode } from "@/lib/modes";
 import type { Category, Modifier, Preset } from "@/lib/types";
 import { CategorySelect } from "./category-select";
 import { ModifierEditor } from "./modifier-editor";
@@ -76,6 +77,7 @@ function PresetForm({
   const [name, setName] = useState(preset.name);
   const [freeText, setFreeText] = useState(preset.free_text ?? "");
   const [instructions, setInstructions] = useState(preset.instructions ?? "");
+  const [mode, setMode] = useState<StudioMode>(preset.mode);
   const [keepMats, setKeepMats] = useState<string[]>(preset.materials ?? []);
   const [newMats, setNewMats] = useState<File[]>([]);
   const [editingMod, setEditingMod] = useState<Modifier | null>(null);
@@ -131,6 +133,7 @@ function PresetForm({
       form.set("name", name.trim());
       form.set("freeText", freeText.trim());
       form.set("instructions", instructions.trim());
+      form.set("mode", mode);
       form.set("modifierIds", JSON.stringify([...selected]));
       form.set("keepMaterials", JSON.stringify(keepMats));
       for (const f of newMats) form.append("materials", f);
@@ -231,6 +234,22 @@ function PresetForm({
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Nombre</label>
             <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="Nombre del preset" className="h-11 text-base" />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium">Modo</label>
+            <div className="grid grid-cols-4 gap-1 rounded-xl bg-muted p-1">
+              {MODES.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  onClick={() => setMode(m.id)}
+                  className={cn("h-9 truncate rounded-lg px-1 text-xs font-medium", mode === m.id ? "bg-background shadow-sm" : "text-muted-foreground")}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground">El preset solo aparece en este modo del estudio.</p>
           </div>
           <div className="space-y-1.5">
             <label className="text-sm font-medium">Prompt manual</label>
