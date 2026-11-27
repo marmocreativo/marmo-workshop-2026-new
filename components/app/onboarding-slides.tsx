@@ -5,28 +5,25 @@ import { ArrowLeft, ArrowRight, ImagePlus, Layers, Sparkles } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { MODES, type ModeDef } from "@/lib/modes";
 import { cn } from "@/lib/utils";
-import { MODE_ICONS } from "./mode-switcher";
 
-// Ilustración del slide (4:3): usa /onboarding/<name>.webp si existe; si no, el icono.
-// Nombres: bienvenida, ocio, filtro, producto, pro y final.
+// Ilustración del slide (4:3, PNG/WebP con transparencia): /onboarding/<name>.webp, sin fondo ni icono.
+// Nombres: bienvenida, ocio, filtro, producto, pro y final. Si falta, el espacio queda vacío.
 function Art({ mode, name, className }: { mode?: ModeDef; name?: string; className?: string }) {
   const [loaded, setLoaded] = useState(false);
-  const Icon = mode ? MODE_ICONS[mode.id] : Sparkles;
   const file = name ?? mode?.id;
   return (
-    <div className={cn("relative mx-auto flex aspect-[4/3] w-full max-w-xs items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-primary/30 via-primary/10 to-transparent", className)}>
-      <Icon className="size-16 text-primary" />
+    <div className={cn("relative mx-auto aspect-[4/3] w-full max-w-xs", className)}>
       {file && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
           src={`/onboarding/${file}.webp`}
           alt=""
-          // Puede cargar antes de hidratar: se revisa también al montar. Si falla, queda oculta y se ve el icono.
+          // Puede cargar antes de hidratar: se revisa también al montar. Si falla, queda oculta.
           ref={(el) => {
             if (el?.complete && el.naturalWidth > 0) setLoaded(true);
           }}
           onLoad={() => setLoaded(true)}
-          className={cn("absolute inset-0 size-full object-cover transition-opacity", loaded ? "opacity-100" : "opacity-0")}
+          className={cn("absolute inset-0 size-full object-contain transition-opacity", loaded ? "opacity-100" : "opacity-0")}
         />
       )}
     </div>
