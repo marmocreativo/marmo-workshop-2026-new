@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowDown, ArrowUp, Package, PartyPopper, Sun } from "lucide-react";
+import type { StudioMode } from "@/lib/modes";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useCompact } from "@/lib/use-compact";
@@ -11,21 +12,37 @@ import type { StudioState, TourStep } from "./use-studio";
 type Info = { n: number; text: string; target?: string; action?: "next" | "finish" };
 
 // Tutorial minimalista: una frase de 2-4 palabras por paso y el botón resaltado como única zona tocable.
-const STEPS: Record<Exclude<TourStep, "result" | "intro">, Info> = {
-  photo: { n: 1, text: "Tómate una selfie", target: "camera" },
-  preset: { n: 2, text: "Elige un preset", target: "library" },
-  process: { n: 3, text: "Toca Procesar", target: "process" },
-  wait: { n: 3, text: "Creando tu imagen, ten paciencia", target: "gallery" },
-  edit: { n: 4, text: "Ajusta y repite", target: "controls", action: "next" },
-  final: { n: 5, text: "¡Listo! A crear", action: "finish" },
+const STEPS: Record<Exclude<TourStep, "result" | "intro" | "goal">, Info> = {
+  photo: { n: 2, text: "Sube o toma una foto", target: "photo" },
+  preset: { n: 3, text: "Elige un preset", target: "library" },
+  process: { n: 4, text: "Toca Procesar", target: "process" },
+  wait: { n: 4, text: "Creando tu imagen, ten paciencia", target: "gallery" },
+  edit: { n: 5, text: "Ajusta y repite", target: "controls", action: "next" },
+  final: { n: 6, text: "¡Listo! A crear", action: "finish" },
 };
-const TOTAL = 5;
+const TOTAL = 6;
+
+// El texto del paso de la foto depende de lo que eligió hacer.
+const PHOTO_TEXT: Record<StudioMode, string> = {
+  filtro: "Tómate una selfie o sube una foto",
+  producto: "Sube la foto de tu producto",
+  ocio: "Sube una foto de personas o mascotas",
+  pro: "Sube o toma una foto",
+};
+
+// Paso 1: ¿qué quieres hacer? Define el modo del resto del tutorial.
+const GOALS: { mode: StudioMode; icon: React.ComponentType<{ className?: string }>; title: string; sub: string }[] = [
+  { mode: "filtro", icon: Sun, title: "Mejorar una selfie", sub: "Luz, fondo y acabado, sin cambiar la foto" },
+  { mode: "producto", icon: Package, title: "Foto de producto para tu negocio", sub: "Fondo y luz profesionales" },
+  { mode: "ocio", icon: PartyPopper, title: "Algo alocado", sub: "Personajes, escenarios y poses nuevas" },
+];
 
 type Rect = { top: number; left: number; width: number; height: number };
 
 export function TourOverlay({ s }: { s: StudioState }) {
   const step = s.tour.step;
-  const info = step && step !== "result" && step !== "intro" ? STEPS[step] : null;
+  const base = step && step !== "result" && step !== "intro" && step !== "goal" ? STEPS[step] : null;
+  const info = useMemo(() => (base && step === "photo" ? { ...base, text: PHOTO_TEXT[s.mode] } : base), [base, step, s.mode]);
   const compact = useCompact();
   const [rect, setRect] = useState<Rect | null>(null);
   const [hidden, setHidden] = useState(false);
@@ -52,6 +69,38 @@ export function TourOverlay({ s }: { s: StudioState }) {
 
   // Bienvenida: slides con los modos antes del tutorial.
   if (step === "intro") return <OnboardingSlides compact={compact} onDone={s.tour.next} onSkip={s.tour.finish} />;
+  if (step === "goal")
+    return (
+      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/75 p-4">
+        <div role="dialog" aria-label="¿Qué quieres hacer?" className="w-full max-w-sm rounded-3xl border-2 border-primary bg-popover p-4 text-popover-foreground shadow-2xl">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-lg font-semibold">¿Qué quieres hacer?</p>
+            <span className="text-xs font-bold text-primary">1/{TOTAL}</span>
+          </div>
+          <div className="mt-3 flex flex-col gap-2">
+            {GOALS.map(({ mode, icon: Icon, title, sub }) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => s.tour.chooseGoal(mode)}
+                className="flex items-center gap-3 rounded-2xl border bg-background/50 p-3 text-left transition-colors hover:border-primary hover:bg-primary/10"
+              >
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                  <Icon className="size-5" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold">¿{title}?</span>
+                  <span className="block text-xs text-muted-foreground">{sub}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+          <button type="button" onClick={s.tour.finish} className="mt-2 h-8 px-1 text-xs text-muted-foreground underline-offset-2 hover:underline">
+            Saltar
+          </button>
+        </div>
+      </div>
+    );
   if (!info || hidden) return null;
 
   const pad = 5;

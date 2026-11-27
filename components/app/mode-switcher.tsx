@@ -14,7 +14,7 @@ export const MODE_ICONS: Record<StudioMode, React.ComponentType<{ className?: st
 
 // Selector de modo del Studio: cambia qué presets, modificadores y controles se muestran.
 export function ModeSwitcher({ s }: { s: StudioState }) {
-  const locked = !!s.tour.step; // durante el tutorial se queda en Filtro
+  const locked = !!s.tour.step; // durante el tutorial se queda en el modo elegido al inicio
   return (
     <div role="tablist" aria-label="Modo" className="grid shrink-0 grid-cols-4 gap-1 rounded-2xl bg-muted p-1">
       {MODES.map((m) => {

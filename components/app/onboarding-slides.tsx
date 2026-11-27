@@ -7,16 +7,27 @@ import { MODES, type ModeDef } from "@/lib/modes";
 import { cn } from "@/lib/utils";
 import { MODE_ICONS } from "./mode-switcher";
 
-// Ilustración del slide: usa /onboarding/<modo>.webp si existe; si no, el icono del modo.
-function Art({ mode }: { mode?: ModeDef }) {
-  const [broken, setBroken] = useState(false);
+// Ilustración del slide (4:3): usa /onboarding/<name>.webp si existe; si no, el icono.
+// Nombres: bienvenida, ocio, filtro, producto, pro y final.
+function Art({ mode, name, className }: { mode?: ModeDef; name?: string; className?: string }) {
+  const [loaded, setLoaded] = useState(false);
   const Icon = mode ? MODE_ICONS[mode.id] : Sparkles;
+  const file = name ?? mode?.id;
   return (
-    <div className="relative mx-auto flex aspect-[4/3] w-full max-w-xs items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-primary/30 via-primary/10 to-transparent">
+    <div className={cn("relative mx-auto flex aspect-[4/3] w-full max-w-xs items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-br from-primary/30 via-primary/10 to-transparent", className)}>
       <Icon className="size-16 text-primary" />
-      {mode && !broken && (
+      {file && (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={`/onboarding/${mode.id}.webp`} alt="" onError={() => setBroken(true)} className="absolute inset-0 size-full object-cover" />
+        <img
+          src={`/onboarding/${file}.webp`}
+          alt=""
+          // Puede cargar antes de hidratar: se revisa también al montar. Si falla, queda oculta y se ve el icono.
+          ref={(el) => {
+            if (el?.complete && el.naturalWidth > 0) setLoaded(true);
+          }}
+          onLoad={() => setLoaded(true)}
+          className={cn("absolute inset-0 size-full object-cover transition-opacity", loaded ? "opacity-100" : "opacity-0")}
+        />
       )}
     </div>
   );
@@ -48,10 +59,10 @@ export function OnboardingSlides({ onDone, onSkip, compact }: { onDone: () => vo
         className={cn("w-full max-w-md select-none rounded-3xl border-2 border-primary bg-popover text-popover-foreground shadow-2xl", compact ? "p-4" : "p-6")}
       >
         {/* Alto fijo: los botones no brincan de lugar entre slides. */}
-        <div key={i} className={cn("animate-in fade-in-0 slide-in-from-right-4 space-y-4 text-center duration-300", compact ? "min-h-[19rem]" : "min-h-[25rem]")}>
+        <div key={i} className={cn("animate-in fade-in-0 slide-in-from-right-4 space-y-4 text-center duration-300", compact ? "min-h-[21rem]" : "min-h-[27rem]")}>
           {i === 0 && (
             <>
-              <Art />
+              <Art name="bienvenida" />
               <h2 className={cn("font-semibold leading-tight", compact ? "text-xl" : "text-2xl")}>Bienvenido a Marmo Workshop</h2>
               <p className="text-base text-foreground/85">Edita tus fotos con IA en segundos. Elige un modo y listo.</p>
             </>
@@ -66,8 +77,10 @@ export function OnboardingSlides({ onDone, onSkip, compact }: { onDone: () => vo
           )}
           {last && (
             <>
+              {/* Más chica que en los otros slides para que quepan los 3 pasos. */}
+              <Art name="final" className={compact ? "max-w-[9rem]" : "max-w-[12rem]"} />
               <h2 className={cn("font-semibold leading-tight", compact ? "text-xl" : "text-2xl")}>Así de fácil</h2>
-              <ol className="mx-auto max-w-xs space-y-3 text-left">
+              <ol className={cn("mx-auto max-w-xs text-left", compact ? "space-y-1.5" : "space-y-2")}>
                 {[
                   [ImagePlus, "Sube tu foto"],
                   [Layers, "Elige un preset"],
@@ -75,7 +88,7 @@ export function OnboardingSlides({ onDone, onSkip, compact }: { onDone: () => vo
                 ].map(([Icon, text], k) => {
                   const I = Icon as typeof ImagePlus;
                   return (
-                    <li key={k} className="flex items-center gap-3 rounded-2xl bg-muted p-3 text-base font-medium">
+                    <li key={k} className={cn("flex items-center gap-3 rounded-2xl bg-muted text-base font-medium", compact ? "p-2" : "p-2.5")}>
                       <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
                         <I className="size-5" />
                       </span>

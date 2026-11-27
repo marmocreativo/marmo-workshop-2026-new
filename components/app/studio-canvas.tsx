@@ -181,11 +181,11 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
             <ImagePlus className="size-12" />
             <p className="text-base font-medium text-white">Arrastra una foto aquí</p>
             <p className="text-sm">o pégala con Ctrl+V</p>
-            <div className="mt-2 flex gap-2">
+            <div data-tour="photo" className="mt-2 flex gap-2">
               <Button variant="outline" className="rounded-xl bg-white/10 text-white hover:bg-white/20" onClick={() => fileRef.current?.click()}>
                 <FolderOpen /> Explorar
               </Button>
-              <Button data-tour="camera" variant="outline" className="rounded-xl bg-white/10 text-white hover:bg-white/20" onClick={() => setCameraOpen(true)}>
+              <Button variant="outline" className="rounded-xl bg-white/10 text-white hover:bg-white/20" onClick={() => setCameraOpen(true)}>
                 <Camera /> Cámara
               </Button>
               <Button variant="outline" className="rounded-xl bg-white/10 text-white hover:bg-white/20" onClick={s.pasteFromClipboard}>
