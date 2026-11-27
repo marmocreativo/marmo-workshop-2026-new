@@ -1,5 +1,6 @@
 "use client";
 
+import { AD_SLOTS, AdSlot } from "./ad-slot";
 import { useEffect, useMemo, useState } from "react";
 import { AlertCircle, Play } from "lucide-react";
 import { toast } from "@/lib/alerts";
@@ -50,6 +51,9 @@ export function Gallery({ initialModifierId }: { initialModifierId?: string }) {
           {active ? `Resultados con “${active.text}”` : "Filtra por modificador para ver qué resultados genera."}
         </p>
       </header>
+
+      <AdSlot slot={AD_SLOTS.gallery} className="min-h-[90px]" />
+
 
       {used.length > 0 && (
         <ChipRow>

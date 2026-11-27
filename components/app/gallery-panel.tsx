@@ -1,12 +1,19 @@
 "use client";
 
+import { AD_SLOTS, AdSlot } from "./ad-slot";
 import { Play, Sparkles } from "lucide-react";
 import { fileUrl } from "@/lib/client";
 import { cn } from "@/lib/utils";
 import type { StudioState } from "./use-studio";
 
 // Resultados del Studio: columna en escritorio, drawer en móvil.
-export function GalleryPanel({ s, onOpen }: { s: StudioState; onOpen?: () => void }) {
+export function GalleryPanel({
+  s,
+  onOpen,
+}: {
+  s: StudioState;
+  onOpen?: () => void;
+}) {
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3">
       <header className="flex h-8 items-center">
@@ -14,13 +21,23 @@ export function GalleryPanel({ s, onOpen }: { s: StudioState; onOpen?: () => voi
       </header>
       <ul className="grid min-h-0 flex-1 grid-cols-2 content-start gap-2 overflow-y-auto">
         {Array.from({ length: s.pending }, (_, i) => (
-          <li key={`p${i}`} className="flex aspect-[4/5] flex-col items-center justify-center gap-2 rounded-2xl bg-muted text-sm text-muted-foreground">
+          <li
+            key={`p${i}`}
+            className="flex aspect-[4/5] flex-col items-center justify-center gap-2 rounded-2xl bg-muted text-sm text-muted-foreground"
+          >
             <Sparkles className="size-7 animate-pulse text-primary" />
             Generando…
           </li>
         ))}
+        {s.gens.length > 0 && (
+          <li className="col-span-2">
+            <AdSlot slot={AD_SLOTS.gallery} />
+          </li>
+        )}
         {s.gens.length === 0 && !s.busy && (
-          <li className="col-span-2 py-16 text-center text-sm text-muted-foreground">Tus resultados aparecerán aquí.</li>
+          <li className="col-span-2 py-16 text-center text-sm text-muted-foreground">
+            Tus resultados aparecerán aquí.
+          </li>
         )}
         {s.gens.map((g) => (
           <li key={g.id}>
@@ -32,21 +49,35 @@ export function GalleryPanel({ s, onOpen }: { s: StudioState; onOpen?: () => voi
               }}
               className={cn(
                 "relative block aspect-[4/5] w-full overflow-hidden rounded-2xl border bg-muted transition-transform hover:scale-[1.01]",
-                s.fresh.has(g.id) && "animate-pulse border-primary ring-2 ring-primary",
+                s.fresh.has(g.id) &&
+                  "animate-pulse border-primary ring-2 ring-primary",
               )}
             >
               {s.fresh.has(g.id) && (
-                <span className="absolute top-2 left-2 z-10 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">Nuevo</span>
+                <span className="absolute top-2 left-2 z-10 rounded-full bg-primary px-2 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                  Nuevo
+                </span>
               )}
               {g.result_file ? (
                 g.kind === "video" ? (
                   <>
-                    <video src={fileUrl(g.result_file)} muted playsInline preload="metadata" className="size-full object-cover" />
+                    <video
+                      src={fileUrl(g.result_file)}
+                      muted
+                      playsInline
+                      preload="metadata"
+                      className="size-full object-cover"
+                    />
                     <Play className="absolute top-2 right-2 size-5 fill-white text-white drop-shadow" />
                   </>
                 ) : (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={fileUrl(g.result_file)} alt="" loading="lazy" className="size-full object-cover" />
+                  <img
+                    src={fileUrl(g.result_file)}
+                    alt=""
+                    loading="lazy"
+                    className="size-full object-cover"
+                  />
                 )
               ) : (
                 <span className="flex size-full items-center justify-center p-2 text-center text-xs text-muted-foreground">
