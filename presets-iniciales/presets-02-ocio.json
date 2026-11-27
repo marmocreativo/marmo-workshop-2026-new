@@ -1,0 +1,256 @@
+{
+  "type": "marmo-workshop/presets",
+  "version": 1,
+  "presets": [
+    {
+      "name": "Portada de revista",
+      "mode": "ocio",
+      "free_text": "Convierte la foto en la portada de una revista de moda con título grande y titulares",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Portada de revista de moda impresa, con nombre de revista y titulares"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Pose segura de modelo mirando a cámara"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Iluminación de estudio editorial"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Póster de película",
+      "mode": "ocio",
+      "free_text": "Póster de película de acción épica con el sujeto como protagonista",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Póster cinematográfico de película de acción con título y créditos"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Explosiones y ciudad en ruinas al fondo"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz dramática de atardecer con contraluz"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Figura de acción",
+      "mode": "ocio",
+      "free_text": "Convierte al sujeto en una figura de acción coleccionable dentro de su caja",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Figura de acción de plástico en blíster de juguete, con nombre en el empaque y accesorios"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Estante de tienda de juguetes"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Superhéroe",
+      "mode": "ocio",
+      "free_text": "El sujeto como superhéroe volando sobre la ciudad",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Traje de superhéroe con capa y emblema en el pecho"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Volando con un puño al frente"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Rascacielos al atardecer vistos desde arriba"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Caricatura 3D",
+      "mode": "ocio",
+      "free_text": "Personaje animado 3D estilo película familiar",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Render 3D estilo película animada, ojos grandes y expresivos, texturas suaves"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Escenario colorido y alegre"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Astronauta",
+      "mode": "ocio",
+      "free_text": "El sujeto como astronauta flotando en el espacio",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Traje espacial blanco con casco abierto"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Flotando en gravedad cero saludando"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "La Tierra y estrellas al fondo"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Retrato renacentista",
+      "mode": "ocio",
+      "free_text": "Pintura al óleo de época con el sujeto como noble",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Pintura al óleo renacentista con craquelado y marco dorado"
+        },
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Ropa noble de época con encajes y terciopelo"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Claroscuro de pintura clásica"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Mascota de la realeza",
+      "mode": "ocio",
+      "free_text": "Ideal para mascotas: retrato real con corona y trono",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Capa real roja de armiño y corona dorada"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Sentado majestuosamente en un trono"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Salón de palacio con cortinas de terciopelo"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Anime",
+      "mode": "ocio",
+      "free_text": "El sujeto como personaje de anime",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Ilustración estilo anime japonés, línea limpia y colores vibrantes"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Calle de Tokio con cerezos en flor"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de atardecer con destellos"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Estrella de rock",
+      "mode": "ocio",
+      "free_text": "El sujeto tocando en un concierto masivo",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Chamarra de cuero y look rockero"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Tocando guitarra eléctrica en el escenario con energía"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Estadio lleno, humo y luces de concierto"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    }
+  ]
+}

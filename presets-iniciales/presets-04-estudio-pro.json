@@ -1,0 +1,361 @@
+{
+  "type": "marmo-workshop/presets",
+  "version": 1,
+  "presets": [
+    {
+      "name": "Ejecutivo corporativo",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Retrato corporativo profesional para LinkedIn"
+        },
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Traje oscuro a la medida con camisa blanca"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "De pie con brazos cruzados, sonrisa segura"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Plano medio"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Oficina moderna desenfocada"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de estudio suave tipo Rembrandt"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Street style urbano",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Look streetwear: sudadera oversize, pantalón cargo y tenis"
+        },
+        {
+          "category": "accesorios",
+          "category_name": "Accesorios",
+          "text": "Lentes de sol y gorra"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Caminando hacia la cámara con actitud"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Calle urbana con grafiti"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Colores intensos y contraste alto"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Gala de noche",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Atuendo de gala elegante en negro"
+        },
+        {
+          "category": "accesorios",
+          "category_name": "Accesorios",
+          "text": "Joyería fina discreta"
+        },
+        {
+          "category": "cabello",
+          "category_name": "Cabello",
+          "text": "Peinado elegante recogido"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Alfombra roja con flashes"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Flash directo de paparazzi"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Explorador de aventura",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Ropa de montaña técnica y mochila"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "De pie en la cima mirando el horizonte"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Montañas nevadas al amanecer"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Plano general épico"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz dorada de amanecer"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Retrato fine art",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Retrato artístico de galería"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de ventana única con claroscuro"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo de tela pintada a mano"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos apagados tipo pintura, textura sutil"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Fitness atlético",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Ropa deportiva de alto rendimiento"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "En movimiento explosivo, entrenando"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Gimnasio industrial oscuro"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luces de contorno duras que marcan los músculos"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Contraste alto y tonos desaturados"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Bohemio playero",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Vestimenta de lino blanco suelta"
+        },
+        {
+          "category": "cabello",
+          "category_name": "Cabello",
+          "text": "Cabello suelto con ondas naturales por el viento"
+        },
+        {
+          "category": "accesorios",
+          "category_name": "Accesorios",
+          "text": "Sombrero de paja"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Playa al atardecer"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Contraluz dorado"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Cyberpunk",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Imagen de ciencia ficción estilo cyberpunk"
+        },
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Chamarra futurista con detalles luminosos"
+        },
+        {
+          "category": "accesorios",
+          "category_name": "Accesorios",
+          "text": "Visor holográfico"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Ciudad futurista lluviosa con anuncios de neón"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Neones magenta y cian"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Vintage años 70",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Ropa setentera: pantalón acampanado y camisa estampada"
+        },
+        {
+          "category": "cabello",
+          "category_name": "Cabello",
+          "text": "Peinado voluminoso de los 70"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Sala retro con muebles de época"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Película desvanecida con tonos cálidos y grano"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Artista creativo",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Overol manchado de pintura"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Pintando un lienzo grande"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Taller de artista luminoso lleno de cuadros"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural de tragaluz"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Plano medio con el lienzo visible"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    }
+  ]
+}

@@ -1,0 +1,286 @@
+{
+  "type": "marmo-workshop/presets",
+  "version": 1,
+  "presets": [
+    {
+      "name": "Hora dorada",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz cálida de atardecer, baja y lateral, que baña el rostro con tonos dorados suaves"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Destello solar sutil entrando por una esquina"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo desenfocado con cielo cálido de atardecer"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Gradación cálida ámbar con sombras suaves y piel luminosa"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Estudio limpio",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Iluminación de estudio suave con softbox frontal y relleno uniforme, sin sombras duras"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo liso gris claro de estudio, ligeramente degradado"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Retoque de piel natural, color neutro y nítido"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Bokeh nocturno",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz suave de neón en el rostro con tonos rosa y azul"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Bokeh grande y redondo de luces de ciudad, profundidad de campo muy corta"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Calle urbana de noche totalmente desenfocada"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Contraste alto, negros profundos y tonos fríos con acentos magenta"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Película analógica",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Grano de película 35 mm visible y ligera viñeta"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Look Kodak Portra: tonos de piel cálidos, verdes suaves, sombras levantadas y colores ligeramente desaturados"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural de día suave"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Blanco y negro dramático",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz lateral dura tipo Rembrandt que esculpe el rostro"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo oscuro casi negro"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Blanco y negro de alto contraste, negros profundos, grano fino, estilo retrato clásico"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Luz de ventana",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural suave de ventana lateral, sombras delicadas y ojos con brillo"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Interior hogareño cálido ligeramente desenfocado"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos naturales y limpios con un toque cálido"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Editorial de revista",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Iluminación beauty dish frontal con luz de contorno en el cabello"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo de color sólido elegante en tono pastel"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Retoque editorial de alta gama, piel impecable pero con textura, colores saturados y nítidos"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Cinemático teal & orange",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz principal cálida en el rostro y luz de ambiente fría"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Ligero destello anamórfico horizontal y viñeta suave"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo urbano desenfocado con atmósfera de película"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Gradación cinematográfica teal & orange, contraste medio y sombras azuladas"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Brillo de verano",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Sol brillante de mediodía suavizado, piel luminosa"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo de playa o cielo azul despejado desenfocado"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Colores vivos y frescos, alta luminosidad, cian del cielo intenso"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Niebla soñadora",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Contraluz suave que crea un halo alrededor del cabello"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Efecto de difusión tipo filtro Black Pro-Mist, altas luces que brillan"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo con neblina ligera y luz difusa"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos pastel lavados, contraste bajo y atmósfera onírica"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    }
+  ]
+}

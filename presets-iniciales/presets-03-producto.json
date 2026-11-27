@@ -1,0 +1,296 @@
+{
+  "type": "marmo-workshop/presets",
+  "version": 1,
+  "presets": [
+    {
+      "name": "Fondo blanco e-commerce",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo blanco puro infinito sin bordes, listo para tienda en línea"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Iluminación de estudio suave y uniforme con sombra de contacto ligera"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Producto centrado, plano frontal, con margen amplio"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Colores fieles, nítido y limpio"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Mármol de lujo",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Superficie de mármol blanco con vetas grises y fondo neutro elegante"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz lateral suave con reflejos sutiles"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Look premium, tonos fríos y limpios"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Platillo de restaurante",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Mesa de madera rústica con servilleta de lino y cubiertos"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural lateral de ventana que resalta texturas y brillo de la comida"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Ángulo de 45 grados, primer plano apetitoso"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Fondo desenfocado suave"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Colores cálidos y apetitosos, alto detalle"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Flat lay cenital",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Toma cenital desde arriba, composición flat lay ordenada"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo de color pastel con props decorativos alrededor"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz difusa uniforme sin sombras duras"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Naturaleza fresca",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Sobre una piedra con hojas verdes, flores y gotas de agua"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural brillante de mañana"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Fondo verde desenfocado con bokeh"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Verdes vibrantes y aspecto fresco y orgánico"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Podio minimalista",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Podio cilíndrico sobre fondo de color sólido con formas geométricas"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de estudio con sombra suave y definida"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Estética minimalista moderna, paleta de dos colores"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Oscuro y dramático",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo negro con superficie reflectante"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de recorte lateral que dibuja los bordes del producto"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Contraste alto, look premium y misterioso"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Splash refrescante",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Salpicaduras de agua congeladas alrededor del producto y fondo azul degradado"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Contraluz brillante que hace resplandecer el agua"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos fríos, nítido, sensación de frescura"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Cafetería acogedora",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Mesa de cafetería con taza de café, libro y plantas al fondo"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz cálida de tarde"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Fondo desenfocado con bokeh cálido"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos cálidos acogedores"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Temporada navideña",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Ambiente navideño con esferas, ramas de pino y luces"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz cálida y suave"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Bokeh de luces navideñas"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Rojos y dorados festivos"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    }
+  ]
+}

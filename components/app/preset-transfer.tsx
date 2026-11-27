@@ -33,13 +33,13 @@ export function PresetTransfer({ mode, onImported, size = "sm" }: { mode?: Studi
   async function importFile(f: File) {
     setBusy("in");
     try {
-      const r = await api<{ imported: number; skipped: number }>("/api/presets/import", {
+      const r = await api<{ imported: number; skipped: number; coversGenerated?: number }>("/api/presets/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: await f.text(),
       });
       await onImported();
-      toast.success(`${r.imported} preset${r.imported === 1 ? "" : "s"} importado${r.imported === 1 ? "" : "s"}${r.skipped ? ` (${r.skipped} vacíos omitidos)` : ""}`);
+      toast.success(`${r.imported} preset${r.imported === 1 ? "" : "s"} importado${r.imported === 1 ? "" : "s"}${r.skipped ? ` (${r.skipped} vacíos omitidos)` : ""}${r.coversGenerated ? ` · ${r.coversGenerated} portadas generadas con IA` : ""}`);
     } catch (e) {
       toast.error((e as Error).message);
     } finally {

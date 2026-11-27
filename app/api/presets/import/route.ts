@@ -1,7 +1,10 @@
 import { HttpError, authed, handle } from "@/lib/api";
 import { one, run, uid } from "@/lib/db";
 import { decodeDataUrl, presetFileSchema } from "@/lib/preset-file";
+import { generatePresetCover } from "@/lib/preset-cover";
 import { saveFile } from "@/lib/storage";
+
+export const maxDuration = 300;
 
 const MAX_BYTES = 60 * 1024 * 1024; // archivo completo
 const MAX_IMAGE = 8 * 1024 * 1024; // cada imagen
@@ -39,8 +42,24 @@ export const POST = handle(async (req: Request) => {
     return saveFile(user.id, buf, ext);
   }
 
+  // Portadas faltantes: se generan con IA en paralelo (de 6 en 6) antes de guardar.
+  const covers = new Map<number, string>();
+  const missing = parsed.data.presets.map((p, i) => ({ p, i })).filter(({ p }) => !p.cover);
+  let generated = 0;
+  for (let k = 0; k < missing.length; k += 6) {
+    await Promise.all(
+      missing.slice(k, k + 6).map(async ({ p, i }) => {
+        const img = await generatePresetCover(p);
+        if (img) {
+          covers.set(i, await saveFile(user.id, img.buf, img.ext));
+          generated++;
+        }
+      }),
+    );
+  }
+
   let imported = 0;
-  for (const p of parsed.data.presets) {
+  for (const [idx, p] of parsed.data.presets.entries()) {
     const ids: string[] = [];
     for (const m of p.modifiers) {
       const cat = await categoryId(m.category, m.category_name);
@@ -53,7 +72,7 @@ export const POST = handle(async (req: Request) => {
       }
     }
     if (!ids.length && !p.free_text?.trim()) continue; // preset vacío: se omite
-    const cover = p.cover ? await image(p.cover) : null;
+    const cover = p.cover ? await image(p.cover) : (covers.get(idx) ?? null);
     const mats: string[] = [];
     const roles: Record<string, string[]> = {};
     for (const m of p.materials) {
@@ -81,5 +100,5 @@ export const POST = handle(async (req: Request) => {
     );
     imported++;
   }
-  return Response.json({ imported, skipped: parsed.data.presets.length - imported });
+  return Response.json({ imported, skipped: parsed.data.presets.length - imported, coversGenerated: generated });
 });

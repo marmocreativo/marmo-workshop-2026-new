@@ -1,0 +1,1181 @@
+{
+  "type": "marmo-workshop/presets",
+  "version": 1,
+  "presets": [
+    {
+      "name": "Hora dorada",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz cálida de atardecer, baja y lateral, que baña el rostro con tonos dorados suaves"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Destello solar sutil entrando por una esquina"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo desenfocado con cielo cálido de atardecer"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Gradación cálida ámbar con sombras suaves y piel luminosa"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Estudio limpio",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Iluminación de estudio suave con softbox frontal y relleno uniforme, sin sombras duras"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo liso gris claro de estudio, ligeramente degradado"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Retoque de piel natural, color neutro y nítido"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Bokeh nocturno",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz suave de neón en el rostro con tonos rosa y azul"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Bokeh grande y redondo de luces de ciudad, profundidad de campo muy corta"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Calle urbana de noche totalmente desenfocada"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Contraste alto, negros profundos y tonos fríos con acentos magenta"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Película analógica",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Grano de película 35 mm visible y ligera viñeta"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Look Kodak Portra: tonos de piel cálidos, verdes suaves, sombras levantadas y colores ligeramente desaturados"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural de día suave"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Blanco y negro dramático",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz lateral dura tipo Rembrandt que esculpe el rostro"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo oscuro casi negro"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Blanco y negro de alto contraste, negros profundos, grano fino, estilo retrato clásico"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Luz de ventana",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural suave de ventana lateral, sombras delicadas y ojos con brillo"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Interior hogareño cálido ligeramente desenfocado"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos naturales y limpios con un toque cálido"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Editorial de revista",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Iluminación beauty dish frontal con luz de contorno en el cabello"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo de color sólido elegante en tono pastel"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Retoque editorial de alta gama, piel impecable pero con textura, colores saturados y nítidos"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Cinemático teal & orange",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz principal cálida en el rostro y luz de ambiente fría"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Ligero destello anamórfico horizontal y viñeta suave"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo urbano desenfocado con atmósfera de película"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Gradación cinematográfica teal & orange, contraste medio y sombras azuladas"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Brillo de verano",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Sol brillante de mediodía suavizado, piel luminosa"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo de playa o cielo azul despejado desenfocado"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Colores vivos y frescos, alta luminosidad, cian del cielo intenso"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Niebla soñadora",
+      "mode": "filtro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Contraluz suave que crea un halo alrededor del cabello"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Efecto de difusión tipo filtro Black Pro-Mist, altas luces que brillan"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo con neblina ligera y luz difusa"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos pastel lavados, contraste bajo y atmósfera onírica"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Portada de revista",
+      "mode": "ocio",
+      "free_text": "Convierte la foto en la portada de una revista de moda con título grande y titulares",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Portada de revista de moda impresa, con nombre de revista y titulares"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Pose segura de modelo mirando a cámara"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Iluminación de estudio editorial"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Póster de película",
+      "mode": "ocio",
+      "free_text": "Póster de película de acción épica con el sujeto como protagonista",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Póster cinematográfico de película de acción con título y créditos"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Explosiones y ciudad en ruinas al fondo"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz dramática de atardecer con contraluz"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Figura de acción",
+      "mode": "ocio",
+      "free_text": "Convierte al sujeto en una figura de acción coleccionable dentro de su caja",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Figura de acción de plástico en blíster de juguete, con nombre en el empaque y accesorios"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Estante de tienda de juguetes"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Superhéroe",
+      "mode": "ocio",
+      "free_text": "El sujeto como superhéroe volando sobre la ciudad",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Traje de superhéroe con capa y emblema en el pecho"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Volando con un puño al frente"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Rascacielos al atardecer vistos desde arriba"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Caricatura 3D",
+      "mode": "ocio",
+      "free_text": "Personaje animado 3D estilo película familiar",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Render 3D estilo película animada, ojos grandes y expresivos, texturas suaves"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Escenario colorido y alegre"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Astronauta",
+      "mode": "ocio",
+      "free_text": "El sujeto como astronauta flotando en el espacio",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Traje espacial blanco con casco abierto"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Flotando en gravedad cero saludando"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "La Tierra y estrellas al fondo"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Retrato renacentista",
+      "mode": "ocio",
+      "free_text": "Pintura al óleo de época con el sujeto como noble",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Pintura al óleo renacentista con craquelado y marco dorado"
+        },
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Ropa noble de época con encajes y terciopelo"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Claroscuro de pintura clásica"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Mascota de la realeza",
+      "mode": "ocio",
+      "free_text": "Ideal para mascotas: retrato real con corona y trono",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Capa real roja de armiño y corona dorada"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Sentado majestuosamente en un trono"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Salón de palacio con cortinas de terciopelo"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Anime",
+      "mode": "ocio",
+      "free_text": "El sujeto como personaje de anime",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Ilustración estilo anime japonés, línea limpia y colores vibrantes"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Calle de Tokio con cerezos en flor"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de atardecer con destellos"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Estrella de rock",
+      "mode": "ocio",
+      "free_text": "El sujeto tocando en un concierto masivo",
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Chamarra de cuero y look rockero"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Tocando guitarra eléctrica en el escenario con energía"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Estadio lleno, humo y luces de concierto"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Fondo blanco e-commerce",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo blanco puro infinito sin bordes, listo para tienda en línea"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Iluminación de estudio suave y uniforme con sombra de contacto ligera"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Producto centrado, plano frontal, con margen amplio"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Colores fieles, nítido y limpio"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Mármol de lujo",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Superficie de mármol blanco con vetas grises y fondo neutro elegante"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz lateral suave con reflejos sutiles"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Look premium, tonos fríos y limpios"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Platillo de restaurante",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Mesa de madera rústica con servilleta de lino y cubiertos"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural lateral de ventana que resalta texturas y brillo de la comida"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Ángulo de 45 grados, primer plano apetitoso"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Fondo desenfocado suave"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Colores cálidos y apetitosos, alto detalle"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Flat lay cenital",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Toma cenital desde arriba, composición flat lay ordenada"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo de color pastel con props decorativos alrededor"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz difusa uniforme sin sombras duras"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Naturaleza fresca",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Sobre una piedra con hojas verdes, flores y gotas de agua"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural brillante de mañana"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Fondo verde desenfocado con bokeh"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Verdes vibrantes y aspecto fresco y orgánico"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Podio minimalista",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Podio cilíndrico sobre fondo de color sólido con formas geométricas"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de estudio con sombra suave y definida"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Estética minimalista moderna, paleta de dos colores"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Oscuro y dramático",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo negro con superficie reflectante"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de recorte lateral que dibuja los bordes del producto"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Contraste alto, look premium y misterioso"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Splash refrescante",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Salpicaduras de agua congeladas alrededor del producto y fondo azul degradado"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Contraluz brillante que hace resplandecer el agua"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos fríos, nítido, sensación de frescura"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Cafetería acogedora",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Mesa de cafetería con taza de café, libro y plantas al fondo"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz cálida de tarde"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Fondo desenfocado con bokeh cálido"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos cálidos acogedores"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Temporada navideña",
+      "mode": "producto",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Ambiente navideño con esferas, ramas de pino y luces"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz cálida y suave"
+        },
+        {
+          "category": "efectos-de-lente",
+          "category_name": "Efectos de lente",
+          "text": "Bokeh de luces navideñas"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Rojos y dorados festivos"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Ejecutivo corporativo",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Retrato corporativo profesional para LinkedIn"
+        },
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Traje oscuro a la medida con camisa blanca"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "De pie con brazos cruzados, sonrisa segura"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Plano medio"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Oficina moderna desenfocada"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de estudio suave tipo Rembrandt"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Street style urbano",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Look streetwear: sudadera oversize, pantalón cargo y tenis"
+        },
+        {
+          "category": "accesorios",
+          "category_name": "Accesorios",
+          "text": "Lentes de sol y gorra"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Caminando hacia la cámara con actitud"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Calle urbana con grafiti"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Colores intensos y contraste alto"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Gala de noche",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Atuendo de gala elegante en negro"
+        },
+        {
+          "category": "accesorios",
+          "category_name": "Accesorios",
+          "text": "Joyería fina discreta"
+        },
+        {
+          "category": "cabello",
+          "category_name": "Cabello",
+          "text": "Peinado elegante recogido"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Alfombra roja con flashes"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Flash directo de paparazzi"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Explorador de aventura",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Ropa de montaña técnica y mochila"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "De pie en la cima mirando el horizonte"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Montañas nevadas al amanecer"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Plano general épico"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz dorada de amanecer"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Retrato fine art",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Retrato artístico de galería"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz de ventana única con claroscuro"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Fondo de tela pintada a mano"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Tonos apagados tipo pintura, textura sutil"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Fitness atlético",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Ropa deportiva de alto rendimiento"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "En movimiento explosivo, entrenando"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Gimnasio industrial oscuro"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luces de contorno duras que marcan los músculos"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Contraste alto y tonos desaturados"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Bohemio playero",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Vestimenta de lino blanco suelta"
+        },
+        {
+          "category": "cabello",
+          "category_name": "Cabello",
+          "text": "Cabello suelto con ondas naturales por el viento"
+        },
+        {
+          "category": "accesorios",
+          "category_name": "Accesorios",
+          "text": "Sombrero de paja"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Playa al atardecer"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Contraluz dorado"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Cyberpunk",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "tipo-de-imagen",
+          "category_name": "Tipo de imagen",
+          "text": "Imagen de ciencia ficción estilo cyberpunk"
+        },
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Chamarra futurista con detalles luminosos"
+        },
+        {
+          "category": "accesorios",
+          "category_name": "Accesorios",
+          "text": "Visor holográfico"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Ciudad futurista lluviosa con anuncios de neón"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Neones magenta y cian"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Vintage años 70",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Ropa setentera: pantalón acampanado y camisa estampada"
+        },
+        {
+          "category": "cabello",
+          "category_name": "Cabello",
+          "text": "Peinado voluminoso de los 70"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Sala retro con muebles de época"
+        },
+        {
+          "category": "postproduccion",
+          "category_name": "Postproducción",
+          "text": "Película desvanecida con tonos cálidos y grano"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    },
+    {
+      "name": "Artista creativo",
+      "mode": "pro",
+      "free_text": null,
+      "instructions": null,
+      "favorite": false,
+      "modifiers": [
+        {
+          "category": "outfit",
+          "category_name": "Outfit",
+          "text": "Overol manchado de pintura"
+        },
+        {
+          "category": "pose-accion",
+          "category_name": "Pose / acción",
+          "text": "Pintando un lienzo grande"
+        },
+        {
+          "category": "fondo-escena",
+          "category_name": "Fondo / escena",
+          "text": "Taller de artista luminoso lleno de cuadros"
+        },
+        {
+          "category": "iluminacion",
+          "category_name": "Iluminación",
+          "text": "Luz natural de tragaluz"
+        },
+        {
+          "category": "encuadre",
+          "category_name": "Encuadre",
+          "text": "Plano medio con el lienzo visible"
+        }
+      ],
+      "cover": null,
+      "materials": []
+    }
+  ]
+}
