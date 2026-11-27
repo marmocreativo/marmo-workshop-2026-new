@@ -86,7 +86,7 @@ export function UsersAdmin() {
         <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por correo…" className="h-10 rounded-xl pl-9 text-base" />
       </form>
 
-      <ul className="space-y-2">
+      <ul className="space-y-2 lg:hidden">
         {users === null && [0, 1, 2].map((i) => <Skeleton key={i} className="h-16 rounded-2xl" />)}
         {users?.length === 0 && <li className="py-10 text-center text-sm text-muted-foreground">Sin resultados.</li>}
         {users?.map((u) => (
@@ -112,6 +112,46 @@ export function UsersAdmin() {
           </li>
         ))}
       </ul>
+
+      {/* Escritorio: tabla */}
+      <div className="hidden overflow-hidden rounded-xl border bg-card lg:block">
+        <table className="w-full text-sm">
+          <thead className="border-b bg-muted/40 text-left text-xs text-muted-foreground">
+            <tr>
+              <th className="px-4 py-2.5 font-medium">Correo</th>
+              <th className="px-4 py-2.5 font-medium">Rol</th>
+              <th className="px-4 py-2.5 font-medium">Plan</th>
+              <th className="px-4 py-2.5 font-medium">Estado</th>
+              <th className="px-4 py-2.5 font-medium">Alta</th>
+              <th className="px-4 py-2.5 text-right font-medium">Tokens</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {users === null && (
+              <tr>
+                <td colSpan={6} className="p-4">
+                  <Skeleton className="h-24" />
+                </td>
+              </tr>
+            )}
+            {users?.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-10 text-center text-muted-foreground">Sin resultados.</td>
+              </tr>
+            )}
+            {users?.map((u) => (
+              <tr key={u.id} onClick={() => setOpenId(u.id)} className="cursor-pointer hover:bg-muted/40">
+                <td className="max-w-80 truncate px-4 py-2.5 font-medium">{u.email}</td>
+                <td className="px-4 py-2.5">{u.role === "admin" ? <Badge>Admin</Badge> : <span className="text-muted-foreground">Usuario</span>}</td>
+                <td className="px-4 py-2.5">{u.plan_id ?? <span className="text-muted-foreground">Gratis</span>}</td>
+                <td className="px-4 py-2.5 text-muted-foreground">{u.sub_status ?? "—"}</td>
+                <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{new Date(u.created_at).toLocaleDateString("es-MX")}</td>
+                <td className="px-4 py-2.5 text-right font-semibold tabular-nums">{formatTokens(u.tokens)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       <UserDialog id={openId} onClose={() => setOpenId(null)} onChanged={() => load(q).catch(() => {})} />
     </div>
