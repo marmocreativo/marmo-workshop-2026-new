@@ -413,7 +413,7 @@ export function StudioCanvas({ s, corner }: { s: StudioState; corner?: React.Rea
             </div>
             <div className="flex gap-2">
               {s.modeDef.ratio && <RatioSelect value={s.ratio} onChange={s.setRatio} ratios={model.ratios} onOpenChange={setMenuOpen} />}
-              <ModelSelect value={s.model} onChange={s.setModel} onOpenChange={setMenuOpen} />
+              <ModelSelect value={s.model} onChange={s.setModel} onOpenChange={setMenuOpen} locked={s.modelLocked} />
             </div>
             <div className="flex items-center gap-2 text-xs text-white/70">
               <span className="flex-1">

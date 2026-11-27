@@ -9,10 +9,13 @@ export function ModelSelect({
   value,
   onChange,
   onOpenChange,
+  locked,
 }: {
   value: string;
   onChange: (id: string) => void;
   onOpenChange?: (open: boolean) => void;
+  /** Modelos que el plan actual no permite (se muestran con candado). */
+  locked?: (id: string) => boolean;
 }) {
   return (
     <GhostMenu
@@ -24,7 +27,8 @@ export function ModelSelect({
       options={MODELS.map((m) => ({
         value: m.id,
         label: m.label,
-        sub: `${m.provider}${m.kind === "video" ? " · Video" : ""}`,
+        sub: locked?.(m.id) ? "🔒 Planes de pago" : `${m.provider}${m.kind === "video" ? " · Video" : ""}`,
+        locked: locked?.(m.id),
         icon: <Image src={modelIcon(m.id)} alt="" width={28} height={28} className="size-7 rounded-md object-cover" />,
       }))}
     />

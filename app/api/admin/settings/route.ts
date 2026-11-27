@@ -8,6 +8,8 @@ const schema = z.object({
   mxnPerToken: z.number().min(0.01).max(1000),
   analysisTokens: z.number().int().min(0).max(1000),
   signupBonusTokens: z.number().int().min(0).max(100000),
+  dailyFreeTokens: z.number().int().min(0).max(100000),
+  freeModelMaxTokens: z.number().int().min(0).max(100000),
 });
 
 // Parámetros que convierten el costo de cada modelo en tokens.

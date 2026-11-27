@@ -6,7 +6,7 @@ import { api, fileUrl, jsonBody, resizeImage } from "@/lib/client";
 import { useRouter } from "next/navigation";
 import { MODELS, getModel, resolveRatio } from "@/lib/models";
 import { DEFAULT_MODE, allowsCategory, getMode, isMode, type StudioMode } from "@/lib/modes";
-import { FREE_FIRST_MAX_TOKENS, tokensFor } from "@/lib/tokens";
+import { FREE_FIRST_MAX_TOKENS, allowedOnFree, tokensFor } from "@/lib/tokens";
 import type { CommunityPreset, Generation, Modifier, Preset } from "@/lib/types";
 import type { BillingMe } from "./billing-panel";
 import { emitBalance, requestBalanceRefresh } from "@/lib/balance";
@@ -73,6 +73,32 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
   // Costo en tokens de la generación elegida (null = modelo deshabilitado por el administrador).
   const modelDef = getModel(model);
   const tokenCost = billing && modelDef ? tokensFor(modelDef, ratio, billing.pricing) : null;
+  // Tier gratuito: solo modelos económicos.
+  const freeTier = !!billing?.account.free && !billing.account.bypass;
+  const modelLocked = useCallback(
+    (id: string) => {
+      const m = getModel(id);
+      return freeTier && !!m && !!billing && !allowedOnFree(m, ratio, billing.pricing);
+    },
+    [freeTier, billing, ratio],
+  );
+  const pickModel = useCallback(
+    (id: string) => {
+      if (modelLocked(id)) {
+        toast.message("Ese modelo es de los planes de pago. Mejora tu plan en Cuenta para usarlo.");
+        return;
+      }
+      setModel(id);
+    },
+    [modelLocked],
+  );
+  // Si el modelo elegido quedó bloqueado (p. ej. al cargar el saldo), se cambia al primero permitido.
+  useEffect(() => {
+    if (!modelLocked(model)) return;
+    const ok = MODELS.find((m) => !modelLocked(m.id));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (ok) setModel(ok.id);
+  }, [model, modelLocked]);
   // Primera generación del tutorial: gratis con modelos estándar (el servidor decide; aquí solo se refleja).
   const freeFirst = !!billing?.account.freeFirst && tokenCost !== null && tokenCost <= FREE_FIRST_MAX_TOKENS;
   const canAfford = !billing || billing.account.bypass || freeFirst || (tokenCost !== null && billing.account.tokens >= tokenCost);
@@ -594,7 +620,8 @@ export function useStudio(initialRef?: string, onboarding = false, initialPreset
     addMaterials,
     removeMaterial,
     model,
-    setModel,
+    setModel: pickModel,
+    modelLocked,
     billing,
     loadBilling,
     tokenCost,

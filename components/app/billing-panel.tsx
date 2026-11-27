@@ -25,6 +25,8 @@ export type BillingMe = {
     bypass: boolean;
     /** Primera generación del tutorial gratis (con modelos de hasta FREE_FIRST_MAX_TOKENS). */
     freeFirst?: boolean;
+    /** Tier gratuito (sin suscripción ni compras): solo modelos económicos. */
+    free?: boolean;
   };
   plans: Plan[];
   packs: Pack[];
@@ -40,6 +42,7 @@ const LEDGER_LABEL: Record<string, string> = {
   refund_revoke: "Reembolso",
   admin_adjust: "Ajuste",
   signup_bonus: "Bono de bienvenida",
+  daily_free: "Tokens gratis del día",
 };
 
 const ACTIVE = ["active", "trialing", "past_due"];

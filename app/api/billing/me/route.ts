@@ -1,21 +1,19 @@
 import { authed, handle } from "@/lib/api";
 import { firstGenerationFree, getPricing, listPacks, listPlans, recentLedger } from "@/lib/billing";
+import { applyDailyFree, isFreeUser } from "@/lib/free-tier";
 
 // Saldo, plan actual, planes/packs disponibles y precios de tokens (todo lo que necesita la UI).
 export const GET = handle(async () => {
   const user = await authed();
-  const [plans, packs, pricing, ledger, freeFirst] = await Promise.all([
-    listPlans(),
-    listPacks(),
-    getPricing(),
-    recentLedger(user.id, 30),
-    firstGenerationFree(user),
-  ]);
+  const [pricing, free] = await Promise.all([getPricing(), isFreeUser(user)]);
+  const tokens = await applyDailyFree(user, pricing, free); // antes de leer el historial, para que aparezca
+  const [plans, packs, ledger, freeFirst] = await Promise.all([listPlans(), listPacks(), recentLedger(user.id, 30), firstGenerationFree(user)]);
   return Response.json({
     account: {
       email: user.email,
       role: user.role,
-      tokens: user.tokens,
+      tokens,
+      free,
       plan_id: user.plan_id,
       sub_status: user.sub_status,
       sub_period_end: user.sub_period_end,

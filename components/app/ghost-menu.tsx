@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type MenuOption = { value: string; label: string; sub?: string; icon: React.ReactNode };
+export type MenuOption = { value: string; label: string; sub?: string; icon: React.ReactNode; locked?: boolean };
 
 // Selector oscuro con icono para los controles del Studio (el select nativo no admite imágenes).
 // El menú se abre hacia arriba y se alinea a un lado para no salirse de la pantalla en móvil.
@@ -92,6 +92,7 @@ export function GhostMenu({
                 className={cn(
                   "flex w-full items-center gap-2.5 rounded-lg p-1.5 text-left text-white hover:bg-white/10",
                   o.value === value && "bg-white/10",
+                  o.locked && "opacity-50",
                 )}
               >
                 <span className="flex size-7 shrink-0 items-center justify-center">{o.icon}</span>

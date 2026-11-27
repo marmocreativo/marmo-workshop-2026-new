@@ -127,6 +127,8 @@ function Params({ pricing, onSaved }: { pricing: Data["pricing"]; onSaved: () =>
     mxnPerToken: String(pricing.mxnPerToken),
     analysisTokens: String(pricing.analysisTokens),
     signupBonusTokens: String(pricing.signupBonusTokens),
+    dailyFreeTokens: String(pricing.dailyFreeTokens),
+    freeModelMaxTokens: String(pricing.freeModelMaxTokens),
   });
   const [busy, setBusy] = useState(false);
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
@@ -142,6 +144,8 @@ function Params({ pricing, onSaved }: { pricing: Data["pricing"]; onSaved: () =>
           mxnPerToken: parseFloat(v.mxnPerToken),
           analysisTokens: parseInt(v.analysisTokens, 10),
           signupBonusTokens: parseInt(v.signupBonusTokens, 10),
+          dailyFreeTokens: parseInt(v.dailyFreeTokens, 10) || 0,
+          freeModelMaxTokens: parseInt(v.freeModelMaxTokens, 10) || 0,
         }),
       });
       toast.success("Parámetros guardados");
@@ -174,6 +178,16 @@ function Params({ pricing, onSaved }: { pricing: Data["pricing"]; onSaved: () =>
         </Field>
         <Field label="Bono de bienvenida (tokens)" hint="Al registrarse. 0 = ninguno.">
           <Input type="number" step="1" min="0" value={v.signupBonusTokens} onChange={set("signupBonusTokens")} />
+        </Field>
+      </div>
+      <h3 className="mt-6 font-semibold">Tier gratuito</h3>
+      <p className="mt-1 text-sm text-muted-foreground">Usuarios sin suscripción activa y sin compras.</p>
+      <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <Field label="Tokens gratis por día" hint="Rellena el saldo hasta esta cantidad cada medianoche (CDMX). No acumula. 0 = apagado.">
+          <Input type="number" step="1" min="0" value={v.dailyFreeTokens} onChange={set("dailyFreeTokens")} />
+        </Field>
+        <Field label="Costo máximo de modelo (tokens)" hint="Solo pueden usar modelos que cuesten hasta esto. 0 = todos.">
+          <Input type="number" step="1" min="0" value={v.freeModelMaxTokens} onChange={set("freeModelMaxTokens")} />
         </Field>
       </div>
       <Button className="mt-4" disabled={busy} onClick={save}>

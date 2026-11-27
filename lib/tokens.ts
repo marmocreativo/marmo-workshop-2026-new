@@ -9,6 +9,10 @@ export type TokenPricing = {
   mxnPerToken: number;
   analysisTokens: number;
   signupBonusTokens: number;
+  /** Tier gratuito: el saldo se rellena hasta esta cantidad cada día (0 = apagado). */
+  dailyFreeTokens: number;
+  /** Tier gratuito: solo modelos que cuestan hasta estos tokens (0 = sin límite). */
+  freeModelMaxTokens: number;
   overrides: Record<string, { tokens: number | null; enabled: boolean }>;
 };
 
@@ -18,6 +22,8 @@ export const DEFAULT_PRICING: TokenPricing = {
   mxnPerToken: 0.4,
   analysisTokens: 1,
   signupBonusTokens: 0,
+  dailyFreeTokens: 0,
+  freeModelMaxTokens: 10,
   overrides: {},
 };
 
@@ -33,6 +39,13 @@ export function tokensFor(model: ModelDef, ratio: string, p: TokenPricing): numb
   if (o && !o.enabled) return null;
   if (o?.tokens != null) return o.tokens;
   return autoTokens(model, ratio, p);
+}
+
+/** En el tier gratuito, ¿se puede usar este modelo? (los más económicos, según el tope del administrador). */
+export function allowedOnFree(model: ModelDef, ratio: string, p: TokenPricing) {
+  if (!p.freeModelMaxTokens) return true;
+  const t = tokensFor(model, ratio, p);
+  return t !== null && t <= p.freeModelMaxTokens;
 }
 
 /** Tope de la primera generación gratis del tutorial: con modelos más caros (Pro, GPT Image, video) se cobra normal. */

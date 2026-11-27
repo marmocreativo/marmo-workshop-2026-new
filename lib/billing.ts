@@ -29,7 +29,8 @@ export type LedgerType =
   | "usage_refund"
   | "refund_revoke"
   | "admin_adjust"
-  | "signup_bonus";
+  | "signup_bonus"
+  | "daily_free";
 export type LedgerEntry = {
   id: string;
   delta: number;
@@ -167,6 +168,8 @@ export async function getPricing(): Promise<TokenPricing> {
     mxnPerToken: positive("mxnPerToken", DEFAULT_PRICING.mxnPerToken),
     analysisTokens: count("analysisTokens", DEFAULT_PRICING.analysisTokens),
     signupBonusTokens: count("signupBonusTokens", DEFAULT_PRICING.signupBonusTokens),
+    dailyFreeTokens: count("dailyFreeTokens", DEFAULT_PRICING.dailyFreeTokens),
+    freeModelMaxTokens: count("freeModelMaxTokens", DEFAULT_PRICING.freeModelMaxTokens),
     overrides: Object.fromEntries(
       overrides.map((o) => [o.model_id, { tokens: o.tokens_override, enabled: o.enabled === 1 }]),
     ),

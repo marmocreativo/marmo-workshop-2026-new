@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Bookmark, Check, ImagePlus, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Bookmark, Check, ImagePlus, Loader2, Pencil, Sparkles, Trash2 } from "lucide-react";
+import { requestBalanceRefresh } from "@/lib/balance";
 import { toast } from "@/lib/alerts";
 import { Button } from "@/components/ui/button";
 import {
@@ -90,6 +91,7 @@ function PresetForm({
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [removeCover, setRemoveCover] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [genCover, setGenCover] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(
@@ -118,6 +120,31 @@ function PresetForm({
       setCoverUrl(URL.createObjectURL(small));
     } catch (e) {
       toast.error((e as Error).message);
+    }
+  }
+
+  // Portada con IA: usa el nombre, el modo, el prompt y los modificadores elegidos (aún sin guardar).
+  async function generateCover() {
+    if (!name.trim()) return toast.error("Ponle un nombre al preset");
+    setGenCover(true);
+    try {
+      const res = await fetch("/api/presets/cover", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, mode, freeText, modifierIds: [...selected] }),
+      });
+      if (!res.ok) throw new Error(((await res.json().catch(() => null)) as { error?: string } | null)?.error ?? "No se pudo generar la portada");
+      const blob = await res.blob();
+      const file = new File([blob], "portada." + (blob.type.includes("png") ? "png" : "jpg"), { type: blob.type });
+      setCover(file);
+      setRemoveCover(false);
+      setCoverUrl(URL.createObjectURL(file));
+      toast.success("Portada generada: guarda el preset para conservarla");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setGenCover(false);
+      requestBalanceRefresh();
     }
   }
 
@@ -172,6 +199,9 @@ function PresetForm({
             <div className="flex flex-wrap gap-1.5">
               <Button type="button" variant="outline" size="sm" onClick={() => fileRef.current?.click()}>
                 <ImagePlus /> {shownCover ? "Cambiar" : "Agregar portada"}
+              </Button>
+              <Button type="button" variant="outline" size="sm" disabled={genCover} onClick={generateCover} title="Genera una portada con IA a partir del preset (cuesta lo mismo que un análisis)">
+                {genCover ? <Loader2 className="animate-spin" /> : <Sparkles />} {genCover ? "Generando…" : "Generar con IA"}
               </Button>
               {shownCover && (
                 <Button

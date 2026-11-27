@@ -8,7 +8,8 @@ import { getMode, isMode } from "@/lib/modes";
 import { parseRoleList } from "@/lib/material-roles";
 import { buildPrompt } from "@/lib/prompt";
 import { saveDeduped } from "@/lib/files";
-import { FREE_FIRST_MAX_TOKENS, tokensFor } from "@/lib/tokens";
+import { FREE_FIRST_MAX_TOKENS, allowedOnFree, tokensFor } from "@/lib/tokens";
+import { applyDailyFree, isFreeUser } from "@/lib/free-tier";
 
 export const maxDuration = 300;
 
@@ -69,8 +70,16 @@ export const POST = handle(async (req: Request) => {
   const prompt = buildPrompt(mods, freeText, model.kind, materials.length, mode.id, roles);
 
   // Cobro de tokens antes de gastar en el proveedor; si algo falla después, se devuelven.
-  const tokens = tokensFor(model, ratio, await getPricing());
+  const pricing = await getPricing();
+  const tokens = tokensFor(model, ratio, pricing);
   if (tokens === null) throw new HttpError(400, "Este modelo no está disponible por ahora");
+  // Tier gratuito: solo modelos económicos, y se aplica el relleno diario antes de cobrar.
+  if (!billingBypass()) {
+    const isFree = await isFreeUser(user);
+    if (isFree && !allowedOnFree(model, ratio, pricing))
+      throw new HttpError(402, `${model.label} es parte de los planes de pago. Elige un modelo económico o mejora tu plan en Cuenta.`);
+    await applyDailyFree(user, pricing, isFree);
+  }
   const id = uid();
   // Primera generación del tutorial: gratis (solo con modelos estándar).
   const free = tokens <= FREE_FIRST_MAX_TOKENS && (await firstGenerationFree(user));
